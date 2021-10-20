@@ -4,6 +4,7 @@ import requests
 from requests.compat import urljoin
 import json
 import sys
+from helper.script_conf import LOG
 
 requests.packages.urllib3.disable_warnings()
 
@@ -26,6 +27,7 @@ class NautobotClient:
         self.token = token
         self.session = requests.Session()
         self.sid = None
+        self.log = LOG("nautobot_client")
 
     def _request(self, method, path, **kwargs):
         """Return a response object after making a request that can be parsed by other methods.
@@ -51,6 +53,7 @@ class NautobotClient:
         if kwargs.get("data"):
             kwargs["data"] = json.dumps(kwargs["data"])
         resp = self.session.request(method, url, **kwargs)
+        self.log.debug(resp.status_code)
         try:
             resp.raise_for_status()
         except Exception as err:
