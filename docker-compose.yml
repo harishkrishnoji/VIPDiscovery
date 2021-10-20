@@ -1,0 +1,22 @@
+---
+version: "3.8"
+services:
+  test:
+    build:
+      target: test
+      context: .
+
+  cli:
+    image: ${COMMIT_IMAGE:-local/lb-info:cli}
+    build:
+      target: cli
+      context: .
+    environment:
+      RD_OPTION_ENV: $RD_OPTION_ENV
+      RD_OPTION_SVC_PWD: $RD_OPTION_SVC_PWD
+      RD_OPTION_SVC_USER: $RD_OPTION_SVC_USER
+      RD_OPTION_LOWER_USER: $RD_OPTION_LOWER_USER
+      RD_OPTION_LOWER_PWD: $RD_OPTION_LOWER_PWD
+      RD_OPTION_NAUTOBOT_KEY: $RD_OPTION_NAUTOBOT_KEY
+    command: master.py
+    tty: true
