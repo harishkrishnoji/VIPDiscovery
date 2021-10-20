@@ -56,7 +56,6 @@ class F5HelperFun:
                 )
                 for cert in json.loads(resp.text)["items"]
             }
-            self.log.debug(self.cert_file)
 
     def gather_vip_info(self, NB):
         self.log.info("Pulling VIP Info from Standby...")

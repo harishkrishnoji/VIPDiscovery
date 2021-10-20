@@ -27,10 +27,10 @@ if __name__ == "__main__":
         f5_master(f5, NB, ENV)
     elif ENV == "OFS_F5":
         f5 = BigIQClient("https://10.224.134.85/mgmt/", svcu, svcp, "ClearPass")
-        f5_master(f5, NB)
+        f5_master(f5, NB, ENV)
     elif ENV == "OFS_F5_Lower":
         f5 = BigIQClient("https://10.224.134.85/mgmt/", lowu, lowp, "TACACS+")
-        f5_master(f5, NB)
+        f5_master(f5, NB, ENV)
     elif ENV == "OFS_Netscaler":
         adm = ADMClient("https://adc.1dc.com/nitro/v1/", svcu, svcp)
-        citrix_master(adm, NB)
+        citrix_master(adm, NB, ENV)
