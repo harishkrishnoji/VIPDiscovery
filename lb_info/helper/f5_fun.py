@@ -28,7 +28,12 @@ class F5HelperFun:
                         dict(
                             [
                                 ("name", pool_mem.get("name").split(":")[0]),
-                                ("address", "1.1.1.1" if "any6" in pool_mem.get("address") else pool_mem.get("address").split("%")[0]),
+                                (
+                                    "address",
+                                    "1.1.1.1"
+                                    if "any6" in pool_mem.get("address")
+                                    else pool_mem.get("address").split("%")[0],
+                                ),
                             ]
                         )
                         for pool_mem in pool["membersReference"].get("items")
@@ -52,7 +57,12 @@ class F5HelperFun:
                         ("cert_exp", cert.get("expirationString")),
                         ("cert_issuer", cert.get("issuer")),
                         ("cert_serial", cert.get("serialNumber")),
-                        ("cert_cn", cert.get("subject").split("CN=")[1].split(",")[0] if len(cert.get("subject").split("CN=")) > 1 else ""),
+                        (
+                            "cert_cn",
+                            cert.get("subject").split("CN=")[1].split(",")[0]
+                            if len(cert.get("subject").split("CN=")) > 1
+                            else "",
+                        ),
                     ]
                 )
                 for cert in json.loads(resp.text)["items"]

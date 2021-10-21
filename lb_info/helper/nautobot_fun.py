@@ -395,7 +395,7 @@ class nautobot_fun:
     #################################################
 
     def get_manufacturers(self):
-        name = "f5" if "F5" in  self.vip_data.get("environment") else "citrix"
+        name = "f5" if "F5" in self.vip_data.get("environment") else "citrix"
         obj = f"dcim/manufacturers/?slug={name}"
         resp = self.get_api_call(obj)
         if resp["count"] == 1:

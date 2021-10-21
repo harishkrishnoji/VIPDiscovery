@@ -8,7 +8,7 @@ def LOG(name="OFD_NS_VIP"):
         format="%(asctime)s %(levelname)s | %(module)s | %(message)s", datefmt="%Y/%m/%d %H:%M:%S", stream=sys.stdout
     )
     log = logging.getLogger(name)
-    log.setLevel(os.environ.get("RD_OPTION_LOG_LEVEL"))
+    log.setLevel(f'logging.{os.environ.get("RD_OPTION_LOG_LEVEL")}')
     return log
 
 
@@ -53,18 +53,18 @@ DISREGARD_LB_F5 = list(
         "localhost",
         "INBOM1LTMSFM0",
         "SLBEDG01",
-        "ecdbkel02-guest02", # ERROR DEVICES
-        "ecdbkel01-guest02", # ERROR DEVICES
-        "ecdbkel02-guest02.network.onefiserv.net", # ERROR DEVICES
-        "ecddmzl02-guest02.network.onefiserv.net", # ERROR DEVICES
-        "ecdbkel02.network.onefiserv.net", # ERROR DEVICES
-        "ecdbkel01-guest02.network.onefiserv.net", # ERROR DEVICES
-        "elidpxy03.onefiserv.net", # ERROR DEVICES
-        "USIRT01SLBLWR01B.network.onefiserv.net", # ERROR DEVICES
-        "ecddmzg02.fiserv.net", # ERROR DEVICES
-        "ecddmz01-guest02.network.onefiserv.net", # ERROR DEVICES
-        "elidpxy04.onefiserv.net", # ERROR DEVICES
-        "jxpdapxy02.onefiserv.net", # ERROR DEVICES
+        "ecdbkel02-guest02",  # ERROR DEVICES
+        "ecdbkel01-guest02",  # ERROR DEVICES
+        "ecdbkel02-guest02.network.onefiserv.net",  # ERROR DEVICES
+        "ecddmzl02-guest02.network.onefiserv.net",  # ERROR DEVICES
+        "ecdbkel02.network.onefiserv.net",  # ERROR DEVICES
+        "ecdbkel01-guest02.network.onefiserv.net",  # ERROR DEVICES
+        "elidpxy03.onefiserv.net",  # ERROR DEVICES
+        "USIRT01SLBLWR01B.network.onefiserv.net",  # ERROR DEVICES
+        "ecddmzg02.fiserv.net",  # ERROR DEVICES
+        "ecddmz01-guest02.network.onefiserv.net",  # ERROR DEVICES
+        "elidpxy04.onefiserv.net",  # ERROR DEVICES
+        "jxpdapxy02.onefiserv.net",  # ERROR DEVICES
     ]
 )
 
