@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 
 
 def LOG(name="OFD_NS_VIP"):
@@ -7,8 +8,7 @@ def LOG(name="OFD_NS_VIP"):
         format="%(asctime)s %(levelname)s | %(module)s | %(message)s", datefmt="%Y/%m/%d %H:%M:%S", stream=sys.stdout
     )
     log = logging.getLogger(name)
-    log.setLevel(logging.DEBUG)
-    # log.setLevel(logging.INFO)
+    log.setLevel(os.environ.get("RD_OPTION_LOG_LEVEL"))
     return log
 
 
@@ -50,10 +50,21 @@ DISREGARD_LB_F5 = list(
         "SLBSVC",
         "SLBAPP2",
         "SLBAPP3",
-        "USDAL3SLBAPP1",
         "localhost",
         "INBOM1LTMSFM0",
         "SLBEDG01",
+        "ecdbkel02-guest02", # ERROR DEVICES
+        "ecdbkel01-guest02", # ERROR DEVICES
+        "ecdbkel02-guest02.network.onefiserv.net", # ERROR DEVICES
+        "ecddmzl02-guest02.network.onefiserv.net", # ERROR DEVICES
+        "ecdbkel02.network.onefiserv.net", # ERROR DEVICES
+        "ecdbkel01-guest02.network.onefiserv.net", # ERROR DEVICES
+        "elidpxy03.onefiserv.net", # ERROR DEVICES
+        "USIRT01SLBLWR01B.network.onefiserv.net", # ERROR DEVICES
+        "ecddmzg02.fiserv.net", # ERROR DEVICES
+        "ecddmz01-guest02.network.onefiserv.net", # ERROR DEVICES
+        "elidpxy04.onefiserv.net", # ERROR DEVICES
+        "jxpdapxy02.onefiserv.net", # ERROR DEVICES
     ]
 )
 
@@ -81,6 +92,7 @@ NAUTOBOT_DEVICE_ROLES = dict(
 NAUTOBOT_DEVICE_REGION = dict(
     [
         ("INMUM1", {"region": "India", "site": "bom01"}),
+        ("INBOM1", {"region": "India", "site": "bom01"}),
         ("DEFRA2", {"region": "Germany", "site": "fra02"}),
         ("DERFA2", {"region": "Germany", "site": "fra02"}),
         ("DEFRA1", {"region": "Germany", "site": "fra01"}),

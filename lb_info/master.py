@@ -15,7 +15,6 @@ svcu = os.environ.get("RD_OPTION_SVC_USER")
 lowu = os.environ.get("RD_OPTION_LOWER_USER")
 lowp = os.environ.get("RD_OPTION_LOWER_PWD")
 npwd = os.environ.get("RD_OPTION_NAUTOBOT_KEY")
-log.info(npwd)
 
 NB = NautobotClient("https://nautobot.onefiserv.net/api/", npwd)
 

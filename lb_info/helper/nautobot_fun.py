@@ -9,6 +9,7 @@ class nautobot_fun:
         self.log = LOG("nautobot_fun")
 
     def write_data(self, vip_data):
+        self.dport = vip_data.get("dport")
         self.vip_data = vip_data
         if self.vip_data.get("cert_cn") and self.vip_data.get("cert_exp"):
             dateformat = datetime.strptime(self.vip_data["cert_exp"], "%b %d %H:%M:%S %Y %Z")
@@ -214,12 +215,17 @@ class nautobot_fun:
                 self.create_pool_mem_addr(mem_info)
 
     def create_pool_mem_addr(self, mem_info):
+        port = 1
+        if "1.1.1.1" in str(self.vip_data.get("pool_mem")):
+            self.dport = self.dport + 1
+            port = self.dport
+            self.log.debug(self.dport)
         data = dict(
             [
                 ("address", mem_info.get("uuid")),
                 ("name", mem_info.get("name")),
                 ("slug", mem_info.get("slug")),
-                ("port", 1),
+                ("port", port),
                 ("tags", [self.tagd]),
             ]
         )
@@ -287,6 +293,7 @@ class nautobot_fun:
     def get_adv_policy(self):
         for pol in self.vip_data.get("advanced_policies", []):
             obj = f"plugins/vip-tracker/policies/?name={pol}&partition={self.partition_uuid}"
+            # obj = f"plugins/vip-tracker/policies/?name={pol}"
             resp = self.get_api_call(obj)
             if resp["count"] >= 1:
                 self.advp_uuid.append(resp["results"][0]["id"])
@@ -388,7 +395,8 @@ class nautobot_fun:
     #################################################
 
     def get_manufacturers(self):
-        obj = "dcim/manufacturers/?slug=citrix"
+        name = "f5" if "F5" in  self.vip_data.get("environment") else "citrix"
+        obj = f"dcim/manufacturers/?slug={name}"
         resp = self.get_api_call(obj)
         if resp["count"] == 1:
             return resp["results"][0]["id"]
@@ -413,14 +421,15 @@ class nautobot_fun:
             if octate in NAUTOBOT_DEVICE_REGION_OFS.keys():
                 name = NAUTOBOT_DEVICE_REGION_OFS[octate]
                 site(name)
+            else:
+                site(NAUTOBOT_DEVICE_REGION.get("SANE_UNK"))
         elif "F5" in self.vip_data.get("environment"):
             octate = ".".join(self.vip_data["ns_info"].get("address").split(".", 2)[:2])
             if octate in NAUTOBOT_DEVICE_REGION_OFS.keys():
                 name = NAUTOBOT_DEVICE_REGION_OFS[octate]
                 site(name)
-        else:
-            site(NAUTOBOT_DEVICE_REGION.get("SANE_UNK"))
-            self.log.error(f"Site {self.lb_dkey} Not Defined in Script Data")
+            else:
+                site(NAUTOBOT_DEVICE_REGION.get("SANE_UNK"))
 
     def create_site(self, name):
         obj = "dcim/sites/"
@@ -432,7 +441,7 @@ class nautobot_fun:
                 ("slug", name.get("site").lower()),
                 ("status", "active"),
                 ("region", self.region_uuid),
-                ("description", name.get("description")),
+                ("description", name.get("description", "")),
             ]
         )
         resp = self.post_api_call(obj, **data)

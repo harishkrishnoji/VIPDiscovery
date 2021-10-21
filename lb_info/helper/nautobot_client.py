@@ -53,8 +53,6 @@ class NautobotClient:
         if kwargs.get("data"):
             kwargs["data"] = json.dumps(kwargs["data"])
         resp = self.session.request(method, url, **kwargs)
-        self.log.debug(resp.status_code)
-        self.log.debug(f"{method} : {url} : {kwargs}")
         try:
             resp.raise_for_status()
         except Exception as err:

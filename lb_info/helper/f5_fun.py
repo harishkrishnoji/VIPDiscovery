@@ -10,6 +10,7 @@ class F5HelperFun:
         self.uuid = item["uuid"]
         self.item = item
         self.env = ENV
+        self.dport = 10
         self.log.info("Gathering Pool member info...")
         self.pool_info()
         self.log.info("Gathering Cert File info...")
@@ -27,7 +28,7 @@ class F5HelperFun:
                         dict(
                             [
                                 ("name", pool_mem.get("name").split(":")[0]),
-                                ("address", pool_mem.get("address").split("%")[0]),
+                                ("address", "1.1.1.1" if "any6" in pool_mem.get("address") else pool_mem.get("address").split("%")[0]),
                             ]
                         )
                         for pool_mem in pool["membersReference"].get("items")
@@ -51,14 +52,14 @@ class F5HelperFun:
                         ("cert_exp", cert.get("expirationString")),
                         ("cert_issuer", cert.get("issuer")),
                         ("cert_serial", cert.get("serialNumber")),
-                        ("cert_cn", cert.get("subject").split("CN=")[1].split(",")[0]),
+                        ("cert_cn", cert.get("subject").split("CN=")[1].split(",")[0] if len(cert.get("subject").split("CN=")) > 1 else ""),
                     ]
                 )
                 for cert in json.loads(resp.text)["items"]
             }
 
     def gather_vip_info(self, NB):
-        self.log.info("Pulling VIP Info from Standby...")
+        self.log.info("Gathering VServer info...")
         resp = self.f5.bigiq_api_call("GET", self.uuid, "/rest-proxy/mgmt/tm/ltm/virtual?expandSubcollections=true")
         if resp.status_code == 200 and json.loads(resp.text).get("items"):
             vs_lst = json.loads(resp.text)["items"]
@@ -74,17 +75,18 @@ class F5HelperFun:
                         [
                             ("name", vip.get("name")),
                             ("address", addr),
+                            ("pool", vip.get("pool").split("/")[2]),
                             ("pool_mem", self.pool_lst.get(vip.get("pool").split("/")[2])),
                             ("partition", vip.get("partition")),
                             ("advanced_policies", vip.get("rules", [])),
-                            ("port", port),
-                            ("pool", vip.get("pool").split("/")[2]),
+                            ("port", "1" if port == "0" else port),
                             ("loadbalancer", self.item["hostname"]),
                             ("tag", "ofd"),
                             ("environment", self.env),
                             ("ns_info", self.item),
                         ]
                     )
+                    vip_to_nautobot["ns_info"]["type"] = "ltm"
                     if vip.get("subPath"):
                         vip_to_nautobot["partition"] = f'{vip.get("partition")}_{vip.get("subPath")}'
                         vip_to_nautobot["pool"] = vip.get("pool").split("/")[3]
@@ -101,5 +103,8 @@ class F5HelperFun:
 
                     self.log.debug(vip_to_nautobot)
                     nbf = nautobot_fun(NB)
+                    if "1.1.1.1" in str(vip_to_nautobot.get("pool_mem")):
+                        self.dport += 5
+                        vip_to_nautobot["dport"] = self.dport
                     nbf.write_data(vip_to_nautobot)
                     count += 1
