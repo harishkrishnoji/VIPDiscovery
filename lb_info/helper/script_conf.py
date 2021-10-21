@@ -8,7 +8,10 @@ def LOG(name="OFD_NS_VIP"):
         format="%(asctime)s %(levelname)s | %(module)s | %(message)s", datefmt="%Y/%m/%d %H:%M:%S", stream=sys.stdout
     )
     log = logging.getLogger(name)
-    log.setLevel(f'logging.{os.environ.get("RD_OPTION_LOG_LEVEL")}')
+    if os.environ.get("RD_OPTION_LOG_LEVEL") == "DEBUG":
+        log.setLevel(logging.DEBUG)
+    else:
+        log.setLevel(logging.INFO)
     return log
 
 
