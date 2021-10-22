@@ -1,10 +1,11 @@
 import os
+from helper.script_conf import *
 from citrix_adm.client import ADMClient
 from f5_bigiq.client import BigIQClient
 from helper.nautobot_client import NautobotClient
-from helper.script_conf import *
 from master_citrix import citrix_master
 from master_f5 import f5_master
+
 
 log = LOG("master")
 log.info("Initiated")
