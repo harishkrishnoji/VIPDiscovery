@@ -4,14 +4,18 @@ import os
 
 
 def LOG(name="OFD_NS_VIP"):
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)s | %(module)s | %(message)s", datefmt="%Y/%m/%d %H:%M:%S", stream=sys.stdout
-    )
+    logging.basicConfig(format="%(asctime)s %(levelname)s | %(module)s | %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
     log = logging.getLogger(name)
+    streamhdlr = logging.StreamHandler(sys.stdout)
+    log.addHandler(streamhdlr)
+    streamhdlr.setStream(sys.stdout)
     if os.environ.get("RD_OPTION_LOG_LEVEL") == "DEBUG":
-        log.setLevel(logging.DEBUG)
+        # log.setLevel(logging.DEBUG)
+        streamhdlr.setLevel(logging.DEBUG)
     else:
-        log.setLevel(logging.INFO)
+        # log.setLevel(logging.INFO)
+        streamhdlr.setLevel(logging.INFO)
+
     return log
 
 
