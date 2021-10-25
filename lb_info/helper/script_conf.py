@@ -4,15 +4,16 @@ import os
 
 
 def LOG(name="OFD_NS_VIP"):
-    # logging.basicConfig(
-    #     format="%(asctime)s %(levelname)s | %(module)s | %(message)s", datefmt="%Y/%m/%d %H:%M:%S", stream=sys.stdout
-    # )
-    FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)s | %(module)s | %(message)s", datefmt="%Y/%m/%d %H:%M:%S", stream=sys.stdout
+    )
 
-    stream_handler = logging.StreamHandler(sys.stdout)
-    stream_handler.setFormatter(logging.Formatter(FORMAT))
+    # FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+
+    # stream_handler = logging.StreamHandler(sys.stdout)
+    # stream_handler.setFormatter(logging.Formatter(FORMAT))
     log = logging.getLogger(name)
-    log.addHandler(stream_handler)
+    # log.addHandler(stream_handler)
     # streamhdlr = logging.StreamHandler(sys.stdout)
     # log.addHandler(streamhdlr)
     # streamhdlr.setStream(sys.stdout)
