@@ -12,7 +12,7 @@ license = "PROPRIETARY"
 [tool.poetry.dependencies]
 python = "^3.8"
 citrix-adm = "^0.0.1"
-f5-bigiq = "^0.0.1"
+f5-bigiq = "^0.0.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.1"

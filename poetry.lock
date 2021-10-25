@@ -143,7 +143,7 @@ toml = ["tomli"]
 
 [[package]]
 name = "f5-bigiq"
-version = "0.0.1"
+version = "0.0.2"
 description = "F5 BigIQ Management SDK"
 category = "main"
 optional = false
@@ -562,7 +562,7 @@ pyyaml = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "ecaa8ea582384416c3a76ecb0254de99f655f0ee08ef865e49d4d79d94abbd04"
+content-hash = "452c508c65b264afc13bf4bccfe68ebae004b2f5f22f01acfd7082a3b6cbd33c"
 
 [metadata.files]
 appdirs = [
@@ -645,8 +645,8 @@ coverage = [
     {file = "coverage-6.0.2.tar.gz", hash = "sha256:6807947a09510dc31fa86f43595bf3a14017cd60bf633cc746d52141bfa6b149"},
 ]
 f5-bigiq = [
-    {file = "f5-bigiq-0.0.1.tar.gz", hash = "sha256:390172673c81610ed5dd1c2d13006a22ee0222c89fe1e19267b3d29b64ed9278"},
-    {file = "f5_bigiq-0.0.1-py3-none-any.whl", hash = "sha256:47beef37dcd046b0c79432f7f0d00606132240a46c567fd3ed339bce3147c7e8"},
+    {file = "f5-bigiq-0.0.2.tar.gz", hash = "sha256:5a3b2550ca6e59bc147989f32e58526847e1261232a83be050aa5968dbc311af"},
+    {file = "f5_bigiq-0.0.2-py3-none-any.whl", hash = "sha256:22b61d922824601a3c51e9ad0f26b7b5137fc84269221594f602a55ad0b03a25"},
 ]
 flake8 = [
     {file = "flake8-3.9.2-py2.py3-none-any.whl", hash = "sha256:bf8fd333346d844f616e8d47905ef3a3384edae6b4e9beb0c5101e25e3110907"},
