@@ -3,11 +3,12 @@ import sys
 import os
 
 
-def LOG(name="OFD_NS_VIP"):
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)s | %(module)s | %(message)s", datefmt="%Y/%m/%d %H:%M:%S", stream=sys.stdout
-    )
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s | %(module)s | %(message)s", datefmt="%Y/%m/%d %H:%M:%S", stream=sys.stdout
+)
 
+
+def LOG(name="OFD_NS_VIP"):
     # FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 
     # stream_handler = logging.StreamHandler(sys.stdout)
