@@ -105,8 +105,8 @@ class F5HelperFun:
                     if vip["profilesReference"].get("items"):
                         for i in vip["profilesReference"].get("items"):
                             vip_to_nautobot["advanced_policies"].append(i["name"])
-                            if "clientside" in i["context"]:
-                                vip_to_nautobot.update(self.ssl_profile[i["name"]])
+                            if "clientside" in i["context"] and self.ssl_profile.get(i["name"]):
+                                vip_to_nautobot.update(self.ssl_profile.get(i["name"]))
 
                     if count % 10 == 0 or count == 0:
                         self.log.info(f"[{len(vs_lst)-count}/{len(vs_lst)}] VIPs...")
