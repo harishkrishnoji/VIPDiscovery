@@ -9,21 +9,11 @@ logging.basicConfig(
 
 
 def LOG(name="OFD_NS_VIP"):
-    # FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-
-    # stream_handler = logging.StreamHandler(sys.stdout)
-    # stream_handler.setFormatter(logging.Formatter(FORMAT))
     log = logging.getLogger(name)
-    # log.addHandler(stream_handler)
-    # streamhdlr = logging.StreamHandler(sys.stdout)
-    # log.addHandler(streamhdlr)
-    # streamhdlr.setStream(sys.stdout)
     if os.environ.get("RD_OPTION_LOG_LEVEL") == "DEBUG":
         log.setLevel(logging.DEBUG)
-        # streamhdlr.setLevel(logging.DEBUG)
     else:
         log.setLevel(logging.INFO)
-        # streamhdlr.setLevel(logging.INFO)
 
     return log
 
