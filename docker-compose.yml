@@ -19,5 +19,5 @@ services:
       RD_OPTION_LOWER_PWD: $RD_OPTION_LOWER_PWD
       RD_OPTION_NAUTOBOT_KEY: $RD_OPTION_NAUTOBOT_KEY
       RD_OPTION_LOG_LEVEL: $RD_OPTION_LOG_LEVEL
-    command: master.py
+    command: f5/master_f5.py
     tty: true

@@ -113,21 +113,6 @@ DISREGARD_LB_F5 = list(
 )
 
 DISREGARD_LB_CITRIX = []
-# DISREGARD_LB_CITRIX = list(
-#    [
-#        "AUSYD1SLBSFM01B-D2NR",
-#        "ARBNA2SLBSFM01B-D2NR",
-#        "USOMA1SLBINT03B",
-#        "INMUM1SLBSFM01A-C2",
-#        "USOMA1SLBSFA02A",
-#        "ARBNA2SLBSFM01B-TESTLEG",
-#        "AUSYD2SLBCOR01B-A2PL",
-#        "AUSYD2SLBSFM01B-A2R",
-#        "USCHD1SLBINT04B",
-#        "DEFRA2SLBCOR50a",
-#        "USCHD1SLBINT01B",
-#    ]
-# )
 
 #########################################################################
 #   Nautobot Variabes
