@@ -62,6 +62,6 @@ COPY --from=base /usr/src/app /usr/src/app
 COPY --from=base /usr/local/lib/python3.8/site-packages /usr/local/lib/python3.8/site-packages
 COPY --from=base /usr/local/bin /usr/local/bin
 
-COPY ./lb_info .
+COPY ./lb_vserver .
 
 ENTRYPOINT ["python"]
