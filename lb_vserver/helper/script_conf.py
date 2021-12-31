@@ -1,31 +1,6 @@
-import logging
+from helper_fts.logger import get_logger
 
-# import sys
-import os
-
-
-# logging.basicConfig(
-#    format="%(asctime)s %(levelname)s | %(module)s | %(message)s", datefmt="%Y/%m/%d %H:%M:%S", stream=sys.stdout
-# )
-
-
-def LOG(name="VIP", file="data/vip.log"):
-    log = logging.getLogger(name)
-    if os.environ.get("RD_OPTION_LOG_LEVEL") == "DEBUG":
-        log.setLevel(logging.DEBUG)
-    elif os.environ.get("RD_OPTION_LOG_LEVEL") == "ERROR":
-        log.setLevel(logging.ERROR)
-    else:
-        log.setLevel(logging.INFO)
-
-    format = "%(asctime)s %(levelname)s | %(module)s | %(message)s"
-    formatter = logging.Formatter(format)
-    file_handler = logging.FileHandler(file)
-    # stream_handler = logging.StreamHandler(sys.stdout)
-    file_handler.setFormatter(formatter)
-    # file_handler.setStream(stream_handler)
-    log.addHandler(file_handler)
-    return log
+log = get_logger()
 
 
 #########################################################################
@@ -33,7 +8,6 @@ def LOG(name="VIP", file="data/vip.log"):
 #########################################################################
 
 VIP_FIELDS = list(["address", "port", "loadbalancer", "name", "pool"])
-
 
 #########################################################################
 #   List of Keys/values which need to be collected from ADM
@@ -87,28 +61,24 @@ DISREGARD_VIP = list(["0.0.0.0", "1.1.1.1", "2.2.2.2", "3.3.3.3", "4.4.4.4", "5.
 
 DISREGARD_LB_F5 = list(
     [
-        # "VCD",      # VPN and VDI Instances
         "slbfde",  # FDE Instances
-        # "LAB",      # LAB Instances
         "OMA1GIOF5B-v1.giolab.local",
-        # "SLBSVC",
         "SLBAPP2",  # Cluster mode SLBAPP1, SLBAPP2, SLBAPP2
         "SLBAPP3",  # Cluster mode SLBAPP1, SLBAPP2, SLBAPP2
         "localhost",
-        # "SLBEDG01",
         # OFS Devices
-        "ecdbkel02-guest02",  # ERROR DEVICES
-        "ecdbkel01-guest02",  # ERROR DEVICES
-        "ecdbkel02-guest02.network.onefiserv.net",  # ERROR DEVICES
-        "ecddmzl02-guest02.network.onefiserv.net",  # ERROR DEVICES
-        "ecdbkel02.network.onefiserv.net",  # ERROR DEVICES
-        "ecdbkel01-guest02.network.onefiserv.net",  # ERROR DEVICES
-        "elidpxy03.onefiserv.net",  # ERROR DEVICES
-        "USIRT01SLBLWR01B.network.onefiserv.net",  # ERROR DEVICES
-        "ecddmzg02.fiserv.net",  # ERROR DEVICES
-        "ecddmz01-guest02.network.onefiserv.net",  # ERROR DEVICES
-        "elidpxy04.onefiserv.net",  # ERROR DEVICES
-        "jxpdapxy02.onefiserv.net",  # ERROR DEVICES
+        # "ecdbkel02-guest02",  # ERROR DEVICES
+        # "ecdbkel01-guest02",  # ERROR DEVICES
+        # "ecdbkel02-guest02.network.onefiserv.net",  # ERROR DEVICES
+        # "ecddmzl02-guest02.network.onefiserv.net",  # ERROR DEVICES
+        # "ecdbkel02.network.onefiserv.net",  # ERROR DEVICES
+        # "ecdbkel01-guest02.network.onefiserv.net",  # ERROR DEVICES
+        # "elidpxy03.onefiserv.net",  # ERROR DEVICES
+        # "USIRT01SLBLWR01B.network.onefiserv.net",  # ERROR DEVICES
+        # "ecddmzg02.fiserv.net",  # ERROR DEVICES
+        # "ecddmz01-guest02.network.onefiserv.net",  # ERROR DEVICES
+        # "elidpxy04.onefiserv.net",  # ERROR DEVICES
+        # "jxpdapxy02.onefiserv.net",  # ERROR DEVICES
     ]
 )
 

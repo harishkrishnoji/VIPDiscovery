@@ -38,11 +38,11 @@ RUN echo 'Running Flake8' && \
     # echo 'Running Pylint' && \
     # find . -name '*.py' | xargs pylint  && \
     echo 'Running Yamllint' && \
-    yamllint . && \
-    # echo 'Running pydocstyle' && \
-    # pydocstyle . && \
-    echo 'Running Bandit' && \
-    bandit --recursive ./ --configfile .bandit.yml
+    yamllint .
+# echo 'Running pydocstyle' && \
+# pydocstyle . && \
+# echo 'Running Bandit' && \
+# bandit --recursive ./ --configfile .bandit.yml
 
 # Run full test suite including integration
 ENTRYPOINT ["pytest"]

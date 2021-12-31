@@ -1,13 +1,23 @@
 from pymongo import MongoClient
 from deepdiff import DeepDiff as diff
+from helper.script_conf import log
 
 
 class MongoDB:
-    def __init__(self, usr, pwd, host, log):
+    def __init__(self, usr, pwd, host):
         self.log = log
-        # self.env = env
         self.client = MongoClient(host=f"mongodb://{usr}:{pwd}@{host}/fdc_inventory?authSource=admin")
-        self.log.info("DB initiated")
+        self.log.debug("DB initiated")
+
+    def vip_diff(self, lb_data):
+        self.db = self.client.fdc_inventory.sane_devices
+        query = {"hostname": lb_data.get("hostname"), "environment": lb_data.get("environment")}
+        document = self.db.find_one(query)
+        match = False
+        if document:
+            if not diff(document.get("vips"), lb_data.get("vips")):
+                match = True
+        return match
 
     def update_document(self, query, data):
         document = self.db.find_one(query)
@@ -25,6 +35,8 @@ class MongoDB:
     def host_collection(self, lb_data):
         self.db = self.client.fdc_inventory.sane_devices
         query = {"address": lb_data.get("address"), "hostname": lb_data.get("hostname")}
+        if "Netscaler" in lb_data.get("environment"):
+            query = {"ns_ip_address": lb_data.get("ns_ip_address"), "hostname": lb_data.get("hostname")}
         self.update_document(query, lb_data)
 
     def vip_collection(self, vip_data):

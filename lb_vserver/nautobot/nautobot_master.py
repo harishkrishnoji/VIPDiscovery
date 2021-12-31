@@ -1,20 +1,8 @@
-import os
-from helper.script_conf import *
-from nautobot_fun import nautobot_fun
-from nautobot_client import NautobotClient
-from helper.db_fun import MongoDB
+from helper.script_conf import log
+from nautobot.nautobot_fun import nautobot_fun
 
 
-log = LOG("master_nautobot")
-npwd = os.environ.get("RD_OPTION_NAUTOBOT_KEY")
-url = os.environ.get("RD_OPTION_NAUTOBOT_URL")
-dbu = os.environ.get("RD_OPTION_DB_USER")
-dbp = os.environ.get("RD_OPTION_DB_PWD")
-dbh = os.environ.get("RD_OPTION_DB_HOST")
-NB = NautobotClient(url, npwd)
-db = MongoDB(dbu, dbp, dbh, log)
-
-if __name__ == "__main__":
+def nautobot_master(db, NB):
     """
     Create or Update all lb devices on nautobot
     1. Get or Create device (loadbalancer)
@@ -24,25 +12,31 @@ if __name__ == "__main__":
       1.3 Get or Create Site (Data dict need to be updated)
           1.3.1 Get or Create Region
     """
-    devices = db.get_document("device", "no_change")
-    nbf = nautobot_fun(NB, log)
+    doc_rec = "no_change"
+    log.info(f"Updating device : {doc_rec}")
+    devices = db.get_document("device", doc_rec)
+    nbf = nautobot_fun(NB)
     for lb in devices:
-        # log.info(lb)
+        log.info(f"{lb.get('hostname')}")
         nbf.get_loadbalancer(lb)
+    log.info("Updating device status to default..")
     db.update_host_status()
 
     """
     Create or Update all VIPs on nautobot
     """
-    # del nbf.get_loadbalancer.lb_uuid
-    vips = db.get_document("vip", "delete")
+    doc_rec = "delete"
+    log.info(f"Updating VIP : {doc_rec}")
+    vips = db.get_document("vip", doc_rec)
     for vip in vips:
         nbf.get_loadbalancer(vip.get("loadbalancer"))
         if hasattr(nbf, "lb_uuid"):
             log.info(f"LB Name: {vip.get('loadbalancer')}, VIP Name: {vip.get('name')}")
-            nb_v = nautobot_fun(NB, log, nbf.lb_uuid)
+            nb_v = nautobot_fun(NB, nbf.lb_uuid)
             nb_v.write_data(vip)
             del nbf.get_loadbalancer.lb_uuid
         else:
             log.error(f"[{lb['hostname']}] not found on Nautobot")
+    log.info("Updating VIP status to default..")
     db.update_vip_status()
+    log.info("Update Complete")

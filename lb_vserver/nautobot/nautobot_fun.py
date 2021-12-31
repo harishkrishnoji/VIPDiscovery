@@ -4,7 +4,7 @@ from helper.script_conf import *
 
 
 class nautobot_fun:
-    def __init__(self, NB, log, lb_uuid=False):
+    def __init__(self, NB, lb_uuid=False):
         self.NB = NB
         self.log = log
         self.lb_uuid = lb_uuid

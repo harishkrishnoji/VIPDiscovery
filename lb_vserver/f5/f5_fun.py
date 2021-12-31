@@ -4,7 +4,7 @@ from helper.script_conf import *
 
 class F5HelperFun:
     def __init__(self, f5, item):
-        self.log = LOG("f5_fun")
+        self.log = log
         self.f5 = f5
         self.apidata = True
         self.item = item
@@ -17,12 +17,11 @@ class F5HelperFun:
         self.ssl_profile_info()
 
     def pool_info(self):
-        resp = self.f5.bigiq_api_call(
-            "GET", self.item.get("uuid"), "/rest-proxy/mgmt/tm/ltm/pool/?expandSubcollections=true"
-        )
-        if resp.status_code == 200 and json.loads(resp.text).get("items"):
+        uri = "/rest-proxy/mgmt/tm/ltm/pool/?expandSubcollections=true"
+        resp = self.get_api_call(uri)
+        if resp:
             self.pool_lst = {}
-            for pool in json.loads(resp.text)["items"]:
+            for pool in resp:
                 if pool["membersReference"].get("items"):
                     pool_m_lst = [
                         dict(
@@ -43,18 +42,19 @@ class F5HelperFun:
             self.apidata = False
 
     def ssl_profile_info(self):
-        resp = self.f5.bigiq_api_call("GET", self.item.get("uuid"), "/rest-proxy/mgmt/tm/ltm/profile/client-ssl")
-        if resp.status_code == 200 and json.loads(resp.text).get("items"):
+        uri = "/rest-proxy/mgmt/tm/ltm/profile/client-ssl"
+        resp = self.get_api_call(uri)
+        if resp:
             self.ssl_profile = {
-                ssl_profile.get("name"): self.cert_file[ssl_profile.get("cert").split("/")[2]]
-                for ssl_profile in json.loads(resp.text)["items"]
+                ssl_profile.get("name"): self.cert_file[ssl_profile.get("cert").split("/")[2]] for ssl_profile in resp
             }
         else:
             self.apidata = False
 
     def cert_file_info(self):
-        resp = self.f5.bigiq_api_call("GET", self.item.get("uuid"), "/rest-proxy/mgmt/tm/sys/file/ssl-cert/")
-        if resp.status_code == 200 and json.loads(resp.text).get("items"):
+        uri = "/rest-proxy/mgmt/tm/sys/file/ssl-cert/"
+        resp = self.get_api_call(uri)
+        if resp:
             self.cert_file = {
                 cert.get("name"): dict(
                     [
@@ -69,20 +69,19 @@ class F5HelperFun:
                         ),
                     ]
                 )
-                for cert in json.loads(resp.text)["items"]
+                for cert in resp
             }
         else:
             self.apidata = False
 
     def gather_vip_info(self):
-        resp = self.f5.bigiq_api_call(
-            "GET", self.item.get("uuid"), "/rest-proxy/mgmt/tm/ltm/virtual?expandSubcollections=true"
-        )
+        log.debug("Gathering VIP Info..")
+        uri = "/rest-proxy/mgmt/tm/ltm/virtual?expandSubcollections=true"
+        resp = self.get_api_call(uri)
         vip_lst = []
-        if resp.status_code == 200 and json.loads(resp.text).get("items"):
-            vs_lst = json.loads(resp.text)["items"]
-            self.log.debug(f"[{len(vs_lst)}] VIPs...")
-            for vip in vs_lst:
+        if resp:
+            self.log.debug(f"[{len(resp)}] VIPs...")
+            for vip in resp:
                 try:
                     if vip.get("destination") not in DISREGARD_VIP and vip.get("pool"):
                         addr = vip.get("destination").split("/")[2].split(":")[0]
@@ -109,21 +108,26 @@ class F5HelperFun:
                             if "/Common/" not in vip.get("pool"):
                                 vip_info["pool"] = vip.get("pool").split("/")[3]
                         vip_info["pool_mem"] = self.pool_lst.get(vip_info["pool"])
-
                         if vip["profilesReference"].get("items"):
                             vip_info["cert"] = []
                             for i in vip["profilesReference"].get("items"):
                                 vip_info["advanced_policies"].append(i["name"])
                                 if "clientside" in i["context"] and self.ssl_profile.get(i["name"]):
                                     vip_info["cert"].append(self.ssl_profile.get(i["name"]))
-
-                        self.log.debug(vip_info)
+                        # self.log.debug(vip_info)
                         if "1.1.1.1" in str(vip_info.get("pool_mem")):
                             self.dport += 5
                             vip_info["dport"] = self.dport
                         vip_lst.append(vip_info)
                 except Exception as e:
                     self.log.error(f"[{vip.get('name')}]: {e}")
-        elif resp.status_code != 200:
-            self.log.error(f"[{self.item.get('hostname')}]: [{resp.status_code}] virtual")
         return vip_lst
+
+    def get_api_call(self, uri):
+        try:
+            log.debug(f"GET API {self.item.get('uuid')}:{uri}")
+            resp = self.f5.bigiq_api_call("GET", self.item.get("uuid"), uri)
+            if resp.status_code == 200 and json.loads(resp.text).get("items"):
+                return json.loads(resp.text)["items"]
+        except Exception as err:
+            log.error(f"GET API {err}")

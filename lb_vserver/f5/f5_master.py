@@ -1,20 +1,6 @@
-import os
 import json
-from f5_bigiq.client import BigIQClient
 from helper.script_conf import *
-from f5_fun import F5HelperFun
-from helper.db_fun import MongoDB
-
-log = LOG("f5_master")
-
-ENV = os.environ.get("RD_OPTION_ENV")
-svcp = os.environ.get("RD_OPTION_SVC_PWD")
-svcu = os.environ.get("RD_OPTION_SVC_USER")
-lowu = os.environ.get("RD_OPTION_LOWER_USER")
-lowp = os.environ.get("RD_OPTION_LOWER_PWD")
-dbp = os.environ.get("RD_OPTION_DB_PWD")
-dbu = os.environ.get("RD_OPTION_DB_USER")
-dbh = os.environ.get("RD_OPTION_DB_HOST")
+from f5.f5_fun import F5HelperFun
 
 
 def f5_master(f5, tags, ENV, db):
@@ -23,7 +9,8 @@ def f5_master(f5, tags, ENV, db):
     Check if it is not in DISREGAR_LB_F5 list and HA state to be standby.
     Pass the list to "F5HelperFun" Class to gather all VIP related details.
     """
-
+    log.debug("Master F5 Initiated.. ")
+    log.debug(f"Gather Device list for {ENV}..")
     for item in device_list(f5):
         log.info(f"{item['hostname']}")
         discard = False
@@ -34,7 +21,7 @@ def f5_master(f5, tags, ENV, db):
             if DISREGARD_LB_F5[i] in item["hostname"]:
                 discard = True
         if not discard and item.get("status") == "Active":
-            ha_state = device_ha_state(f5, item, "standby")
+            ha_state = device_ha_state(f5, item)
             if ha_state == "active":
                 item["ha_state"] = ha_state
             elif ha_state == "standby":
@@ -44,22 +31,30 @@ def f5_master(f5, tags, ENV, db):
                     item["vips"] = f5f.gather_vip_info()
                 else:
                     log.error(f"{item['hostname']}: Gathering Pool and Cert info")
+        match = db.vip_diff(item)
+        log.debug(f"{item.get('hostname')}: Device info DB Update...")
         db.host_collection(item)
-        for vip in item.get("vips", []):
-            db.vip_collection(vip)
+        if not match:
+            log.debug(f"{item.get('hostname')}: VIP info DB Update...")
+            for vip in item.get("vips", []):
+                db.vip_collection(vip)
+        else:
+            log.debug(f"{item.get('hostname')}: NO change in VIP info")
 
 
 def device_list(f5):
     """function to pull devices which are reachable from BIG-IQ.
     """
-    resp = f5.bigiq_api_call()
-    log.debug(f"F5 Device list Status code : {resp.status_code}")
-    if resp.status_code == 200:
+    try:
+        resp = f5.bigiq_api_call()
         jresp = json.loads(resp.text)
+        log.debug(f"F5 Device count : {len(jresp.get('items'))}")
         return device_stats(f5, list(dict((i, j[i]) for i in F5_DEVICE) for j in jresp["items"]))
+    except Exception as err:
+        log.error(f"{err}")
 
 
-def device_ha_state(f5, item, state):
+def device_ha_state(f5, item):
     """function to get the HA state for given device.
     """
     discard = False
@@ -69,12 +64,9 @@ def device_ha_state(f5, item, state):
     if not discard:
         try:
             resp = f5.bigiq_api_call("GET", uuid=item["uuid"], path="/rest-proxy/mgmt/tm/sys/failover")
-            if resp.status_code == 200:
-                return json.loads(resp.text)["apiRawValues"]["apiAnonymous"].split()[1]
-            else:
-                log.error(f"{item['hostname']} : {path} : {resp.status_code}")
-        except:
-            log.error(f"{item['hostname']}")
+            return json.loads(resp.text)["apiRawValues"]["apiAnonymous"].split()[1]
+        except Exception as err:
+            log.error(f"{item['hostname']}: {err}")
     else:
         return discard
 
@@ -82,8 +74,8 @@ def device_ha_state(f5, item, state):
 def device_stats(f5, f5_info):
     """function to pull devices which are reachable from BIG-IQ.
     """
-    resp = f5.bigiq_api_call("GET", uuid="stats")
-    if resp.status_code == 200:
+    try:
+        resp = f5.bigiq_api_call("GET", uuid="stats")
         jresp = json.loads(resp.text)
         for item in f5_info:
             svalue = f"https://localhost/mgmt/shared/resolver/device-groups/cm-bigip-allBigIpDevices/devices/{item['uuid']}/stats"
@@ -93,19 +85,5 @@ def device_stats(f5, f5_info):
             else:
                 item["status"] = "Active"
         return f5_info
-    else:
-        log.error(f"{uuid} : {resp.status_code}")
-
-
-if __name__ == "__main__":
-    if ENV == "OFD_F5":
-        f5 = BigIQClient("https://10.165.232.72/mgmt/", svcu, svcp, "ACS-RADIUS")
-        tags = ["ofd", "f5"]
-    elif ENV == "OFS_F5":
-        f5 = BigIQClient("https://11.224.134.85/mgmt/", svcu, svcp, "ClearPass")
-        tags = ["ofs", "f5"]
-    elif ENV == "OFS_F5_Lower":
-        f5 = BigIQClient("https://11.35.169.85/mgmt/", lowu, lowp, "TACACS+")
-        tags = ["ofs", "f5", "lowers"]
-    db = MongoDB(dbu, dbp, dbh, log)
-    f5_master(f5, tags, ENV, db)
+    except Exception as err:
+        log.error(f"{item['hostname']}: {err}")

@@ -1,44 +1,43 @@
-import os
 import json
 from helper.script_conf import *
-from citrix_fun import *
-from citrix_adm.client import ADMClient
-from helper.db_fun import MongoDB
-
-log = LOG("citrix_master")
-
-ENV = os.environ.get("RD_OPTION_ENV")
-svcp = os.environ.get("RD_OPTION_SVC_PWD")
-svcu = os.environ.get("RD_OPTION_SVC_USER")
-dbp = os.environ.get("RD_OPTION_DB_PWD")
-dbu = os.environ.get("RD_OPTION_DB_USER")
-dbh = os.environ.get("RD_OPTION_DB_HOST")
-db = MongoDB(dbu, dbp, dbh, log)
+from citrix.citrix_fun import *
 
 
-def citrix_master(adm):
+def citrix_master(adm, tags, ENV, db):
     """Gather all NetScaler device list from ADM, run through filter.
 
     Args:
-        adm (object): ADM Instance.
+        adm (obj): ADM Instance.
+        tags (lst): List of Tags associated for Nautobot object.
+        ENV (str): Enviroment OFD, OFS.
+        db (obj): Mongo DB Instance.
     """
+    log.debug("Master Citrix Initiated.. ")
+    log.debug(f"Gather Device list for {ENV}..")
     ns_info = ns_device_lst(adm)
     for device in ns_info:
         # Filter to look for Standby, non OFS, and Standalone
-        var = device["ha_ip_address"].startswith("10.") or device["ha_ip_address"].startswith("167.")
-        device["tags"] = ["ofd", "netscaler"]
-        device["environment"] = ENV
+        device["tags"] = tags
         if "OFS_Netscaler" in ENV:
             var = device["ha_ip_address"].startswith("11.")
-            device["ipv4_address"] = device["ipv4_address"].replace("10", "11", 1)
-            device["tags"] = ["ofs", "netscaler"]
-        db.host_collection(device)
-        if (
-            f"{var} is True and (device['hostname'] not in DISREGARD_LB_CITRIX)) and "
-            "((device['ha_master_state'] == 'Secondary' and device['instance_state'] == 'Up' and device['ipv4_address'] != '') or "
-            "('DEFRA1SLBSFA02A' in device['hostname'] and device['instance_state'] == 'Up')"
-        ):
-            gather_vip_info(device, adm)
+            if var:
+                device["ipv4_address"] = device["ipv4_address"].replace("10", "11", 1)
+                device["environment"] = ENV
+        elif "OFD_Netscaler" in ENV:
+            var = device["ha_ip_address"].startswith("10.") or device["ha_ip_address"].startswith("167.")
+            if var:
+                device["environment"] = ENV
+
+        if device.get("environment") == ENV:
+            if (
+                "device['hostname'] not in DISREGARD_LB_CITRIX) and "
+                "((device['ha_master_state'] == 'Secondary' and device['instance_state'] == 'Up' and device['ipv4_address'] != '') or "
+                "('DEFRA1SLBSFA02A' in device['hostname'] and device['instance_state'] == 'Up')"
+            ):
+                # if device.get("hostname") == "AUSYD2SLBSFM01A-D2NR":
+                gather_vip_info(device, adm, ENV, db)
+            else:
+                db.host_collection(device)
 
 
 def ns_device_lst(adm):
@@ -50,21 +49,27 @@ def ns_device_lst(adm):
     Returns:
         Return dict of devices.
     """
-    resp = adm.adm_api_call()
-    log.debug(f"NS Device list Status code : {resp.status_code}")
-    jresp = json.loads(resp.text)
-    return list(dict((i, j[i]) for i in NS_DEVICE) for j in jresp["ns"])
+    try:
+        resp = adm.adm_api_call()
+        jresp = json.loads(resp.text)
+        log.debug(f"NS Device count : {len(jresp.get('ns'))}")
+        return list(dict((i, j[i]) for i in NS_DEVICE) for j in jresp["ns"])
+    except Exception as err:
+        log.error(f"{err}")
 
 
-def gather_vip_info(device, adm):
+def gather_vip_info(device, adm, ENV, db):
     """Gather VIP information for each devices.
 
     Args:
         device (dict): Device info.
         adm (object): ADM Instance.
+        ENV (str): Enviroment OFD, OFS.
+        db (obj): Mongo DB Instance.
     """
+    log.debug(f"{device.get('hostname')}: Gathering VIP Info..")
     vs_lst = pull_vip_info(device, adm).get("lbvserver", [])
-    log.debug(f"[{len(vs_lst)}] VIPs...")
+    log.debug(f"{device.get('hostname')}: {len(vs_lst)} VIPs...")
     vip_lst = []
     for vs_name in vs_lst:
         if vs_name.get("name") and vs_name.get("ipv46") not in DISREGARD_VIP:
@@ -85,11 +90,12 @@ def gather_vip_info(device, adm):
                     vip_info["cert"] = cert_to_nautobot
             vip_lst.append(vip_info)
     device["vips"] = vip_lst
+    match = db.vip_diff(device)
+    log.debug(f"{device.get('hostname')}: Device info DB Update...")
     db.host_collection(device)
-    for vip in device.get("vips", []):
-        db.vip_collection(vip)
-
-
-if __name__ == "__main__":
-    adm = ADMClient("https://adc.1dc.com/nitro/v1/", svcu, svcp)
-    citrix_master(adm)
+    if not match:
+        log.debug(f"{device.get('hostname')}: VIP info DB Update...")
+        for vip in device.get("vips", []):
+            db.vip_collection(vip)
+    else:
+        log.debug(f"{device.get('hostname')}: NO change in VIP info")
