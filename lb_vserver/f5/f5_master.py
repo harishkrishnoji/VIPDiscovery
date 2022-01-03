@@ -1,13 +1,22 @@
+# pylint: disable=W1203, C0103, W0631, C0301, W0703, R1710
+"""F5 Master."""
+
 import json
-from helper.script_conf import *
+from helper.script_conf import log, DISREGARD_LB_F5, F5_STANDALONE, F5_DEVICE
 from f5.f5_fun import F5HelperFun
 
 
 def f5_master(f5, tags, ENV, db):
-    """
-    Get list of all devices from BIG-IQ, which are reachable from BIG-IQ.
-    Check if it is not in DISREGAR_LB_F5 list and HA state to be standby.
+    """F5 Master.
+
+    Check if device is not in DISREGAR_LB_F5 list and HA state to be standby.
     Pass the list to "F5HelperFun" Class to gather all VIP related details.
+
+    Args:
+        f5 (Class): F5 API Client.
+        tags (list): Tag names.
+        ENV (str): Device environment name.
+        db (Class): MongoDB API Client.
     """
     log.debug("Master F5 Initiated.. ")
     log.debug(f"Gather Device list for {ENV}..")
@@ -17,8 +26,8 @@ def f5_master(f5, tags, ENV, db):
         item["tags"] = tags
         item["type"] = "ltm"
         item["environment"] = ENV
-        for (i, ig) in enumerate(DISREGARD_LB_F5):
-            if DISREGARD_LB_F5[i] in item["hostname"]:
+        for i in enumerate(DISREGARD_LB_F5):
+            if DISREGARD_LB_F5[i[0]] in item["hostname"]:
                 discard = True
         if not discard and item.get("status") == "Active":
             ha_state = device_ha_state(f5, item)
@@ -43,7 +52,13 @@ def f5_master(f5, tags, ENV, db):
 
 
 def device_list(f5):
-    """function to pull devices which are reachable from BIG-IQ.
+    """Get list of all devices from BIG-IQ.
+
+    Args:
+        f5 (class): F5 API Client.
+
+    Returns:
+        dict: Device data.
     """
     try:
         resp = f5.bigiq_api_call()
@@ -55,11 +70,18 @@ def device_list(f5):
 
 
 def device_ha_state(f5, item):
-    """function to get the HA state for given device.
+    """Get the HA state for given device.
+
+    Args:
+        f5 (class): F5 API Client.
+        item (dict): Device info.
+
+    Returns:
+        str: Device HA State.
     """
     discard = False
-    for (i, ig) in enumerate(F5_STANDALONE):
-        if F5_STANDALONE[i] in item["hostname"]:
+    for i in enumerate(F5_STANDALONE):
+        if F5_STANDALONE[i[0]] in item["hostname"]:
             discard = True
     if not discard:
         try:
@@ -72,7 +94,14 @@ def device_ha_state(f5, item):
 
 
 def device_stats(f5, f5_info):
-    """function to pull devices which are reachable from BIG-IQ.
+    """Check if list of all devices from BIG-IQ are reachable from BIG-IQ.
+
+    Args:
+        f5 (class): F5 API Client.
+        f5_info (dict): Device info.
+
+    Returns:
+        dict: updated f5_info
     """
     try:
         resp = f5.bigiq_api_call("GET", uuid="stats")

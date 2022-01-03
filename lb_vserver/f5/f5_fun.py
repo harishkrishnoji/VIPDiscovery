@@ -1,9 +1,20 @@
+# pylint: disable=W1203, C0103, W0631, C0301, W0703, R1710, R0902, E0602, R1702
+"""F5 Function."""
+
 import json
-from helper.script_conf import *
+from helper.script_conf import log, DISREGARD_VIP
 
 
 class F5HelperFun:
+    """Create a F5 Function client."""
+
     def __init__(self, f5, item):
+        """Initialize the F5 Function client.
+
+        Args:
+            f5 (Class): F5 API Client.
+            item (dict): LB related and UUID info.
+        """
         self.log = log
         self.f5 = f5
         self.apidata = True
@@ -17,6 +28,7 @@ class F5HelperFun:
         self.ssl_profile_info()
 
     def pool_info(self):
+        """Get all pool info for specific device UUID."""
         uri = "/rest-proxy/mgmt/tm/ltm/pool/?expandSubcollections=true"
         resp = self.get_api_call(uri)
         if resp:
@@ -42,6 +54,7 @@ class F5HelperFun:
             self.apidata = False
 
     def ssl_profile_info(self):
+        """Get all ssl profile info for specific device UUID."""
         uri = "/rest-proxy/mgmt/tm/ltm/profile/client-ssl"
         resp = self.get_api_call(uri)
         if resp:
@@ -52,6 +65,7 @@ class F5HelperFun:
             self.apidata = False
 
     def cert_file_info(self):
+        """Get all cert file info for specific device UUID."""
         uri = "/rest-proxy/mgmt/tm/sys/file/ssl-cert/"
         resp = self.get_api_call(uri)
         if resp:
@@ -75,6 +89,11 @@ class F5HelperFun:
             self.apidata = False
 
     def gather_vip_info(self):
+        """Get all VIP info for specific device UUID.
+
+        Returns:
+            dict: VIP info.
+        """
         log.debug("Gathering VIP Info..")
         uri = "/rest-proxy/mgmt/tm/ltm/virtual?expandSubcollections=true"
         resp = self.get_api_call(uri)
@@ -124,6 +143,14 @@ class F5HelperFun:
         return vip_lst
 
     def get_api_call(self, uri):
+        """Get API call function.
+
+        Args:
+            uri (str): URI.
+
+        Returns:
+            dict: data.
+        """
         try:
             log.debug(f"GET API {self.item.get('uuid')}:{uri}")
             resp = self.f5.bigiq_api_call("GET", self.item.get("uuid"), uri)

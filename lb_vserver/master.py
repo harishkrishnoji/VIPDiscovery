@@ -1,7 +1,10 @@
+# pylint: disable=W1203, C0103, W0631, W0401, W0703, C0412
+"""Master."""
+
 import os
 from citrix_adm.client import ADMClient
 from f5_bigiq.client import BigIQClient
-from helper.script_conf import *
+from helper.script_conf import log
 from citrix.citrix_master import citrix_master
 from f5.f5_master import f5_master
 from helper.db_fun import MongoDB

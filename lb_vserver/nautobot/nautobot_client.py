@@ -1,11 +1,12 @@
+# pylint: disable=W1203, C0103, W0631, W0703
 """Nautobot REST API SDK."""
 
-import requests
-from requests.compat import urljoin
 import json
 import sys
+import requests
+from requests.compat import urljoin
 
-requests.packages.urllib3.disable_warnings()
+requests.urllib3.disable_warnings()
 
 
 class NautobotClient:
@@ -16,7 +17,7 @@ class NautobotClient:
 
         Args:
             url (str): Nautobot API URL (ending with: /api/').
-            toke (str): Authorization token for Nautobot API.
+            token (str): Authorization token for Nautobot API.
             ssl_verify (bool): Whether or not to verify SSL certificate.
         """
         if "/api/" not in url:
@@ -37,7 +38,6 @@ class NautobotClient:
         Returns:
             Requests response object.
         """
-
         headers = {
             "Content-type": "application/json",
             "Accept": "application/json",

@@ -1,5 +1,8 @@
+# pylint: disable=W1203, C0103, W0631, C0301, W0703, R1710
+"""Citrix Function."""
+
 import json
-from helper.script_conf import *
+from helper.script_conf import log, NS_API_DATA
 
 
 def pull_sgrp_info(vs_name, adm):
@@ -7,7 +10,7 @@ def pull_sgrp_info(vs_name, adm):
 
     Args:
         vs_name (str): Virtual server name.
-        adm (Class): ADM Class
+        adm (Class): ADM Class.
 
     Returns:
         dict: Return dictionary with VServer, pool and pool members.
@@ -29,12 +32,11 @@ def pull_cert_info(vs_name, adm):
 
     Args:
         vs_name (str): Virtual server name.
-        adm (Class): ADM Class
+        adm (Class): ADM Class.
 
     Returns:
         dict: Return dictionary with Cert CN, Cert serial, issuer, and expiration data.
     """
-
     try:
         NS_API_DATA["path"] = f"config/sslvserver_binding/{vs_name.get('name')}"
         resp = adm.adm_api_call(**NS_API_DATA)
@@ -71,7 +73,7 @@ def pull_vip_info(device, adm):
 
     Args:
         device (str): LB instance.
-        adm (Class): ADM Class
+        adm (Class): ADM Class.
 
     Returns:
         list: Return list of VServer.

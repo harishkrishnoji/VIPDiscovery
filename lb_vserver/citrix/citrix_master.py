@@ -1,6 +1,9 @@
+# pylint: disable=W1203, C0103, W0631, C0301, W0703, R1710, W0125
+"""Citrix Master."""
+
 import json
-from helper.script_conf import *
-from citrix.citrix_fun import *
+from helper.script_conf import log, DISREGARD_VIP, NS_DEVICE
+from citrix.citrix_fun import pull_vip_info, pull_sgrp_info, pull_cert_info
 
 
 def citrix_master(adm, tags, ENV, db):
