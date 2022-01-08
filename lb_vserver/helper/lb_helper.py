@@ -30,10 +30,16 @@ NS_DEVICE = list(
 )
 
 #########################################################################
+#   List of Devices to pull data from BIG-IQ
+#########################################################################
+
+F5_DEVICE_TO_QUERY = list(["USOMA1ASMINT02A.1dc.com"])
+
+#########################################################################
 #   List of Keys/values which need to be collected from BIG-IQ
 #########################################################################
 
-F5_DEVICE = list(["uuid", "address", "product", "version", "hostname"])
+F5_DEVICE_FIELDS = list(["uuid", "address", "product", "version", "hostname"])
 
 #########################################################################
 #   F5 Standalone devices

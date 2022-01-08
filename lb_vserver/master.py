@@ -31,10 +31,12 @@ if __name__ == "__main__":
                 f5 = BigIQClient("https://10.165.232.72/mgmt/", svcu, svcp, "ACS-RADIUS")
                 tags = ["ofd", "f5"]
             elif ENV == "OFS_F5":
-                f5 = BigIQClient("https://11.224.134.85/mgmt/", svcu, svcp, "ClearPass")
+                # f5 = BigIQClient("https://11.224.134.85/mgmt/", svcu, svcp, "ClearPass")
+                f5 = BigIQClient("https://10.224.134.85/mgmt/", svcu, svcp, "ClearPass")
                 tags = ["ofs", "f5"]
             elif ENV == "OFS_F5_Lower":
-                f5 = BigIQClient("https://11.35.169.85/mgmt/", lowu, lowp, "TACACS+")
+                f5 = BigIQClient("https://10.35.169.85/mgmt/", lowu, lowp, "TACACS+")
+                # f5 = BigIQClient("https://11.35.169.85/mgmt/", lowu, lowp, "TACACS+")
                 tags = ["ofs", "f5", "lowers"]
             f5_master(f5, tags, ENV)
     except Exception as err:
