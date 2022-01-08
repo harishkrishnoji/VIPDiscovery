@@ -1,12 +1,15 @@
 # pylint: disable=W1203, C0103, W0631, C0301, W0703, R1710
 """F5 Master."""
 
+import os
 import json
-from helper.script_conf import log, DISREGARD_LB_F5, F5_STANDALONE, F5_DEVICE
+from helper.local_helper import log
+from helper.lb_helper import DISREGARD_LB_F5, F5_STANDALONE, F5_DEVICE_FIELDS
+from nautobot.nautobot_master import NautobotClient
 from f5.f5_fun import F5HelperFun
 
 
-def f5_master(f5, tags, ENV, db):
+def f5_master(f5, tags, ENV):
     """F5 Master.
 
     Check if device is not in DISREGAR_LB_F5 list and HA state to be standby.
@@ -16,13 +19,12 @@ def f5_master(f5, tags, ENV, db):
         f5 (Class): F5 API Client.
         tags (list): Tag names.
         ENV (str): Device environment name.
-        db (Class): MongoDB API Client.
     """
     log.debug("Master F5 Initiated.. ")
     log.debug(f"Gather Device list for {ENV}..")
     for item in device_list(f5):
-        log.info(f"{item['hostname']}")
         discard = False
+        item["mgmt_address"] = item.pop("address")
         item["tags"] = tags
         item["type"] = "ltm"
         item["environment"] = ENV
@@ -40,15 +42,7 @@ def f5_master(f5, tags, ENV, db):
                     item["vips"] = f5f.gather_vip_info()
                 else:
                     log.error(f"{item['hostname']}: Gathering Pool and Cert info")
-        match = db.vip_diff(item)
-        log.debug(f"{item.get('hostname')}: Device info DB Update...")
-        db.host_collection(item)
-        if not match:
-            log.debug(f"{item.get('hostname')}: VIP info DB Update...")
-            for vip in item.get("vips", []):
-                db.vip_collection(vip)
-        else:
-            log.debug(f"{item.get('hostname')}: NO change in VIP info")
+        NautobotClient(item)
 
 
 def device_list(f5):
@@ -64,7 +58,16 @@ def device_list(f5):
         resp = f5.bigiq_api_call()
         jresp = json.loads(resp.text)
         log.debug(f"F5 Device count : {len(jresp.get('items'))}")
-        return device_stats(f5, list(dict((i, j[i]) for i in F5_DEVICE) for j in jresp["items"]))
+        device_info = []
+        F5_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+        for device in jresp["items"]:
+            # For Test or Troubleshooting purpose
+            # Filter the devices for which you want to discover VIPs
+            if "All" in F5_DEVICE_TO_QUERY or device["hostname"] in F5_DEVICE_TO_QUERY:
+                log.info(f"{device['hostname']}")
+                # Filter only the Fields/Keys which match F5_DEVICE_FIELDS
+                device_info.append(dict((i, device[i]) for i in F5_DEVICE_FIELDS))
+        return device_stats(f5, device_info)
     except Exception as err:
         log.error(f"{err}")
 

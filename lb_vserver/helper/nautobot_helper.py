@@ -1,104 +1,16 @@
 # pylint: disable=W1203, C0103, W0631
 """Script local config."""
 
-from helper_fts.logger import get_logger
-
-log = get_logger()
-
-
-#########################################################################
-#   Mandatory keys/value required to create VIP in Nautobot
-#########################################################################
-
-VIP_FIELDS = list(["address", "port", "loadbalancer", "name", "pool"])
-
-#########################################################################
-#   List of Keys/values which need to be collected from ADM
-#########################################################################
-
-NS_DEVICE = list(
-    [
-        "ha_ip_address",
-        "ha_master_state",
-        "ipv4_address",
-        "instance_state",
-        "is_ha_configured",
-        "mgmt_ip_address",
-        "model_id",
-        "hostname",
-        "ns_ip_address",
-        "serialnumber",
-        "system_hardwareversion",
-        "type",
-        "version",
-    ]
-)
-
-#########################################################################
-#   List of Keys/values which need to be collected from BIG-IQ
-#########################################################################
-
-F5_DEVICE = list(["uuid", "address", "product", "version", "hostname"])
-
-#########################################################################
-#   F5 Standalone devices
-#########################################################################
-
-F5_STANDALONE = list(["SLBAPP1", "OMA1GIOF5A"])
-
-#########################################################################
-#   Netscaler API Proxy Variable
-#########################################################################
-
-NS_API_DATA = dict([("proxy_key", "_MPS_API_PROXY_MANAGED_INSTANCE_IP")])
-
-#########################################################################
-#   List of VIPs which need to be disregarded from F5 devices
-#########################################################################
-
-DISREGARD_VIP = list(["0.0.0.0", "1.1.1.1", "2.2.2.2", "3.3.3.3", "4.4.4.4", "5.5.5.5", ":0"])
-
-#########################################################################
-#   List of LB instances to disregard
-#########################################################################
-
-DISREGARD_LB_F5 = list(
-    [
-        "slbfde",  # FDE Instances
-        "OMA1GIOF5B-v1.giolab.local",
-        "SLBAPP2",  # Cluster mode SLBAPP1, SLBAPP2, SLBAPP2
-        "SLBAPP3",  # Cluster mode SLBAPP1, SLBAPP2, SLBAPP2
-        "localhost",
-        # OFS Devices
-        # "ecdbkel02-guest02",  # ERROR DEVICES
-        # "ecdbkel01-guest02",  # ERROR DEVICES
-        # "ecdbkel02-guest02.network.onefiserv.net",  # ERROR DEVICES
-        # "ecddmzl02-guest02.network.onefiserv.net",  # ERROR DEVICES
-        # "ecdbkel02.network.onefiserv.net",  # ERROR DEVICES
-        # "ecdbkel01-guest02.network.onefiserv.net",  # ERROR DEVICES
-        # "elidpxy03.onefiserv.net",  # ERROR DEVICES
-        # "USIRT01SLBLWR01B.network.onefiserv.net",  # ERROR DEVICES
-        # "ecddmzg02.fiserv.net",  # ERROR DEVICES
-        # "ecddmz01-guest02.network.onefiserv.net",  # ERROR DEVICES
-        # "elidpxy04.onefiserv.net",  # ERROR DEVICES
-        # "jxpdapxy02.onefiserv.net",  # ERROR DEVICES
-    ]
-)
-
-DISREGARD_LB_CITRIX = []
 
 #########################################################################
 #   Nautobot Variabes
 #########################################################################
 
-NAUTOBOT_DEVICE_ROLES = dict(
-    [("LB", {"name": "load_balancer", "slug": "load-balancer", "description": "F5 and Citrix LB role"})]
-)
-
 NAUTOBOT_DEVICE_REGION = dict(
     [
         ("INMUM1", {"region": "India", "site": "INBOM01"}),
         ("INBOM1", {"region": "India", "site": "INBOM01"}),
+        ("INCHE1", {"region": "India", "site": "INCHE01"}),
         ("DEFRA2", {"region": "Germany", "site": "DEFRA02"}),
         ("DERFA2", {"region": "Germany", "site": "DEFRA02"}),
         ("DEFRA1", {"region": "Germany", "site": "DEFRA01"}),

@@ -2,7 +2,8 @@
 """Citrix Function."""
 
 import json
-from helper.script_conf import log, NS_API_DATA
+from helper.local_helper import log
+from helper.lb_helper import NS_API_DATA
 
 
 def pull_sgrp_info(vs_name, adm):
