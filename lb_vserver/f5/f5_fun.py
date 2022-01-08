@@ -2,7 +2,8 @@
 """F5 Function."""
 
 import json
-from helper.script_conf import log, DISREGARD_VIP
+from helper.local_helper import log
+from helper.lb_helper import DISREGARD_VIP
 
 
 class F5HelperFun:
@@ -133,7 +134,9 @@ class F5HelperFun:
                                 vip_info["advanced_policies"].append(i["name"])
                                 if "clientside" in i["context"] and self.ssl_profile.get(i["name"]):
                                     vip_info["cert"].append(self.ssl_profile.get(i["name"]))
-                        # self.log.debug(vip_info)
+                        # Nautobot does not accepting pool member without address and if pool member is FQDN
+                        # we add default IP as 1.1.1.1, if there are more than one FQDN, we append dport (destination port)
+                        # dport cannot be the same, so it is randomly incremented
                         if "1.1.1.1" in str(vip_info.get("pool_mem")):
                             self.dport += 5
                             vip_info["dport"] = self.dport

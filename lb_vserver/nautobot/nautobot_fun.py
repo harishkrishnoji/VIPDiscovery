@@ -1,132 +1,299 @@
-# pylint: disable=W1203, C0103, W0631, W0703, R1710, R0902, W0201, C0201, R1705, R0904
-"""Nautobot Function."""
+# pylint: disable=W1203, C0103, W0631, W0703
+"""Nautobot REST API SDK."""
 
-import json
+import os
+import requests
+import pynautobot
+from helper.nautobot_helper import *
+from helper.local_helper import log
+from helper.lb_helper import VIP_FIELDS
 from datetime import datetime
-from helper.script_conf import (
-    log,
-    VIP_FIELDS,
-    NAUTOBOT_DEVICE_REGION,
-    NAUTOBOT_DEVICE_ROLES,
-    NAUTOBOT_DEVICE_REGION_OFS,
-)
 
+requests.urllib3.disable_warnings()
 
-class nautobot_fun:
-    """Create a Nautobot Function client."""
+url                     = os.environ.get("RD_OPTION_NAUTOBOT_URL")
+token                   = os.environ.get("RD_OPTION_NAUTOBOT_KEY")
+nb                      = pynautobot.api(url, token=token)
+nb.http_session.verify  = False
+plugins_attr            = getattr(nb, "plugins")
+extras_attr             = getattr(nb, "extras")
+dcim_attr               = getattr(nb, "dcim")
+ipam_attr               = getattr(nb, "ipam")
+vip_tracker_attr        = getattr(plugins_attr, "vip-tracker")
+tags_attr               = getattr(extras_attr, "tags")
+ip_addresses_attr       = getattr(ipam_attr, "ip-addresses")
+sites_attr              = getattr(dcim_attr, "sites")
+devices_attr            = getattr(dcim_attr, "devices")
+device_types_attr       = getattr(dcim_attr, "device-types")
+device_roles_attr       = getattr(dcim_attr, "device-roles")
+manufacturers_attr      = getattr(dcim_attr, "manufacturers")
+regions_attr            = getattr(dcim_attr, "regions")
+vip_attr                = getattr(vip_tracker_attr, "vip")
+vip_detail_attr         = getattr(vip_tracker_attr, "vip-detail")
+certificates_attr       = getattr(vip_tracker_attr, "certificates")
+environments_attr       = getattr(vip_tracker_attr, "environments")
+issuer_attr             = getattr(vip_tracker_attr, "issuer")
+members_attr            = getattr(vip_tracker_attr, "members")
+organization_attr       = getattr(vip_tracker_attr, "organization")
+partitions_attr         = getattr(vip_tracker_attr, "partitions")
+policies_attr           = getattr(vip_tracker_attr, "policies")
+pools_attr              = getattr(vip_tracker_attr, "pools")
 
-    def __init__(self, NB, lb_uuid=False):
+class LB_DEVICE:
+    """Create a Nautobot LB Device Function client."""
+
+    def __init__(self, device_data):
         """Initialize Nautobot Function Client.
 
         Args:
-            NB (Class): Nautobot API Client
-            lb_uuid (bool, optional): Create Loadbalancer in Nautobot Device module. Defaults to False.
+            device_data (dict): LB Device information in dict format.
         """
-        self.NB = NB
-        self.log = log
-        self.lb_uuid = lb_uuid
+        self.device_data            = device_data
 
-    def main_fun(self, vip_data):
-        """Main Function.
+    def device(self):
+        """Check if loadbalancer object exist in core Device module."""
+        device = devices_attr.get(name=self.device_data.get("hostname"))
+        self.tags()
+        if not device:
+            self.device_role()
+            self.device_type()
+            self.site()
+            data = {
+                "name": self.device_data.get("hostname"),
+                "device_type": self.device_type_uuid,
+                "device_role": self.device_role_uuid,
+                "site": self.site_uuid,
+                "status": "active",
+                "tags": self.tag_uuid
+            }
+            device = devices_attr.create(data)
+        self.loadbalancer_uuid = device.id
 
-        Main function which will be initiated from nautobot_master.
-        VIP could can have more than one Cert (SNI), so cert is list.
+    def device_role(self):
+        """Create Device Role object in core Organization module."""
+        device_role = device_roles_attr.get(name="load_balancer")
+        if not device_role:
+            data = {"name": "load_balancer", "slug": "load-balancer", "description": "F5 and Citrix LB role"}
+            device_role = device_roles_attr.create(data)
+        self.device_role_uuid = device_role.id
+
+    def device_type(self):
+        """Create Device Type object in core Organization module."""
+        device_type = device_types_attr.get(slug=self.device_data.get("type").lower())
+        if not device_type:
+            self.manufacturers()
+            data = {
+                "manufacturer": self.manufacturer_uuid,
+                "model": self.device_data.get("type"),
+                "slug": self.slug_parser(self.device_data.get("type"))
+            }
+            device_type = device_types_attr.create(data)
+        self.device_type_uuid = device_type.id
+
+    def manufacturers(self):
+        """Create manufacturer object in core Organization module."""
+        manufacturer_name = "F5" if "F5" in self.device_data.get("environment") else "Citrix"
+        manufacturer = manufacturers_attr.get(name=manufacturer_name)
+        if not manufacturer:
+            data = {"name": manufacturer_name.upper(), "slug": self.slug_parser(manufacturer_name)}
+            manufacturer = manufacturers_attr.create(data)
+        self.manufacturer_uuid = manufacturer.id
+
+    def tags(self):
+        """Create tag object in core Organization module."""
+        tag_uuid = []
+        for tag_name in self.device_data.get("tags"):
+            tag = tags_attr.get(slug=self.slug_parser(tag_name))
+            if not tag:
+                data = {"name": tag_name.upper(), "slug": self.slug_parser(tag_name)}
+                tag = tags_attr.create(data)
+            tag_uuid.append(tag.id)
+        self.tag_uuid = tag_uuid
+
+    def site(self):
+        """Create Site object in core Organization module."""
+        self.site_info = NAUTOBOT_DEVICE_REGION.get("SANE_UNK")
+        if "ofd" in self.device_data.get("tags"):
+            lb_dkey = self.device_data.get("hostname")[:6]
+            if lb_dkey in NAUTOBOT_DEVICE_REGION.keys():
+                self.site_info = NAUTOBOT_DEVICE_REGION[lb_dkey]
+        elif "ofs" in self.lb_data.get("tags"):
+            octate = ".".join(self.lb_data.get("address").split(".", 2)[:2])
+            if octate in NAUTOBOT_DEVICE_REGION_OFS.keys():
+                self.site_info = NAUTOBOT_DEVICE_REGION_OFS[octate]
+        site = sites_attr.get(slug=self.slug_parser(self.site_info.get("site")))
+        if not site:
+            self.region()
+            data = {
+                "name": self.site_info.get("site"),
+                "slug": self.slug_parser(self.site_info.get("site")),
+                "status": "active",
+                "region": self.region_uuid,
+                "description": self.site_info.get("description", "")
+            }
+            site = sites_attr.create(data)
+        self.site_uuid = site.id
+
+    def region(self):
+        """Create Region object in core Organization module."""
+        region = regions_attr.get(name=self.site_info.get("region"))
+        if not region:
+            data = {"name": self.site_info.get("region"), "slug": self.slug_parser(self.site_info.get("region"))}
+            region = regions_attr.create(data)
+        self.region_uuid = region.id
+
+    def slug_parser(self, name):
+        """Slug name parser.
+
+        Replace all special characters and space with "_" and covert to lower case.
 
         Args:
-            vip_data (dict): Single VIP related info.
+            name (str): Object name.
+
+        Returns:
+            str: Object name.
         """
-        self.vip_data = vip_data
-        self.dport = self.vip_data.get("dport")
-        self.cert_uuid = []
-        if not hasattr(self, "tag"):
-            self.get_tags(self.vip_data.get("tags"))
-        for cert in self.vip_data.get("cert"):
-            self.cert_parser(cert)
-            self.get_cert()
-        self.main_worker()
+        return name.replace(" ", "-").replace(".", "_").replace("*", "").replace("/", "_").lower()
 
-    def main_worker(self):
-        """Main worker.
 
+class LB_VIP:
+    """Create a Nautobot LB VIP Function client."""
+
+    def __init__(self, vip_data, loadbalancer_uuid, tag_uuid):
+        """Initialize Nautobot Function Client.
+
+        Args:
+            vip_data (dict)         : LB VIP information in dict format.
+            loadbalancer_uuid (str) : LB Device UUID.
+            tag_uuid (list)          : Tag UUID in list.
+        """
+        self.vip_data           = vip_data
+        self.loadbalancer_uuid  = loadbalancer_uuid
+        self.tag_uuid           = tag_uuid
+        self.policies_uuid      = []
+        self.environment_uuid   = ""
+        self.partition_uuid     = ""
+        self.certificates_uuid  = []
+        self.vip_addr_uuid      = ""
+
+    def main_fun(self):
+        """Main function, initiated from nautobot_master.
+        
         Validate if input vip info has all fields required to create Nautobot entry.
-        Get or create partition and environment UUID, before initiating VIP function.
+        Create partition and environment UUID, before initiating VIP function.
         """
+        self.dport = self.vip_data.get("dport")
+
+            
         if all(x in list(self.vip_data) for x in VIP_FIELDS):
-            self.log.debug(f"VIP create / update / validate in process : {self.vip_data.get('name')} ...")
-
             try:
-                self.get_partition()
-                self.get_environment()
-                self.get_vip()
+                if self.vip_data.get("cert"):
+                    self.certificates()
+                if self.vip_data.get("partition"):
+                    self.partition()
+                if self.vip_data.get("advanced_policies"):
+                    self.policies()
+                self.environment()
+                self.members()
+                self.pool()
+                self.vip_address()
+                self.vip()
             except Exception as err:
-                self.log.error(f"Unable to create VIP : {self.vip_data.get('name')} : {err}")
+                log.error(f"[VIP] {self.vip_data.get('name')} : {err}")
         else:
-            self.log.error(
-                f"Mandatory VIP Fields are missing : {VIP_FIELDS} : {dict((i,self.vip_data[i]) for i in self.vip_data if i!='ns_info')}"
-            )
-            self.log.warning("Going for Next VIP")
+            log.error(f"[Missing VIP Fields] {VIP_FIELDS} : {list(self.vip_data)}")
+
+    def vip(self):
+        """Create VIP object in VIP Plugin module."""
+        vips = vip_attr.filter(name=self.vip_data.get("name"))
+        data = {
+            "name": self.vip_data.get("name"),
+            "port": self.vip_data.get("port"),
+            "address": self.vip_addr_uuid,
+            "pool": self.pool_uuid,
+            "certificates": self.certificates_uuid,
+            "loadbalancer": self.loadbalancer_uuid,
+            "partition": self.partition_uuid,
+            "environment": self.environment_uuid,
+            "advanced_policies": self.policies_uuid,
+            "protocol": self.vip_data.get("protocol", "TCP").upper(),
+            "tags": self.tag_uuid,
+        }
+        for vip in vips:
+            if (vip.address == self.vip_addr_uuid) and (str(vip.port) == str(self.vip_data.get("port"))) and (vip.protocol == self.vip_data.get("protocol")):
+                log.debug("[VIP] Delete")
+                vip.delete()
+        vip = vip_attr.create(data)
+        log.debug(f"[VIP] Created : {self.vip_data.get('name')}") if vip else log.error(f"VIP {self.vip_data.get('name')}")
+
 
     ###########################################
-    # IP Address related functions
+    # VIP address functions
     ###########################################
-    def get_address(self, addr, create=False):
-        """Check if Address exist in Nautobot IPAM IP Address core module.
+    def vip_address(self):
+        self.vip_addr_uuid = self.ipam_address(self.vip_data.get("address"))
 
-        Args:
-            addr (str): IP address.
-            create (bool, optional): If address does not exist, create address. Defaults to False.
-
-        Returns:
-            str: UUID of the IP address object.
-        """
-        tag = "ofd" if "ofd" in self.vip_data.get("tags") else "ofs"
-        obj = f"ipam/ip-addresses?address={addr}&tag={tag}"
-        resp = self.get_api_call(obj)
-        if resp["count"] >= 1:
-            return resp["results"][0]["id"]
-        elif create:
-            return self.create_address(addr)
-
-    def create_address(self, addr):
-        """Create Address in Nautobot IPAM IP Address core module.
-
-        Args:
-            addr (str): IP address.
-
-        Returns:
-            str: UUID of the IP address object.
-        """
-        obj = "ipam/ip-addresses/"
-        data = dict([("address", addr), ("status", "active"), ("tags", self.tag)])
-        resp = self.post_api_call(obj, **data)
-        if resp:
-            return resp["id"]
-        return None
-
-    ###########################################
-    # Environment functions
-    ###########################################
-    def get_environment(self):
-        """Check if Environment object exist in VIP Plugin module."""
-        obj = f"plugins/vip-tracker/environments/?name={self.vip_data.get('environment')}"
-        resp = self.get_api_call(obj)
-        if resp["count"] >= 1:
-            self.env_uuid = resp["results"][0]["id"]
-        else:
-            self.create_environment()
-
-    def create_environment(self):
+    def environment(self):
         """Create Environment object in VIP Plugin module."""
-        obj = "plugins/vip-tracker/environments/"
-        data = dict([("name", self.vip_data.get("environment")), ("slug", self.vip_data.get("environment").lower())])
-        resp = self.post_api_call(obj, **data)
-        if resp:
-            self.env_uuid = resp["id"]
+        environment = environments_attr.get(name=self.vip_data.get("environment"))
+        if not environment:
+            data = {"name": self.vip_data.get("environment"), "slug": self.slug_parser(self.vip_data.get("environment"))}
+            environment = environments_attr.create(data)
+            log.debug("[Environment] Created") if environment else log.error(f"Environment {self.vip_data.get('environment')}")
+        self.environment_uuid = environment.id
+
+    def partition(self):
+        """Create Partition object in VIP Plugin module."""
+        partition = partitions_attr.get(name=self.vip_data.get("partition"))
+        if not partition:
+            data = {"name": self.vip_data.get("partition"), "slug": self.slug_parser(self.vip_data.get("partition"))}
+            partition = partitions_attr.create(data)
+            log.debug("[Partition] Created") if partition else log.error(f"Partition {self.vip_data.get('partition')}")
+        self.partition_uuid = partition.id
+
+    def policies(self):
+        """Create Policies object in VIP Plugin module."""
+        adv_policies = []
+        for policy in self.vip_data.get("advanced_policies"):
+            policies = policies_attr.get(name=policy)
+            if not policies:
+                data = {"name": policy, "slug": self.slug_parser(policy)}
+                policies = policies_attr.create(data)
+                log.debug("[Policy] Created") if policies else log.error(f"Policy {policy}")
+            adv_policies.append(policies.id)
+        self.policies_uuid = adv_policies
 
     ###########################################
     # Cert related functions
     ###########################################
-    def cert_parser(self, cert):
+
+    def certificates(self):
+        """Create Certificate object in VIP Plugin module."""
+        cert_uuid = []
+        for cert in self.vip_data.get("cert"):
+            certificate = certificates_attr.get(name=cert.get("cert_cn"))
+            self.cert_parser(cert)
+            self.cert_issuer()
+            data = {
+                "name": self.cert_info.get("cn"),
+                "slug": self.slug_parser(self.cert_info.get("cn")),
+                "exp": self.cert_info.get("exp", "2000-01-01T00:00"),
+                "serial_number": self.cert_info.get("serial"),
+                "issuer": self.cert_issuer_uuid,
+                "cert_type": "RSA",
+            }
+            if certificate:
+                resp = certificate.update(data)
+                if resp:
+                    log.debug(f"[Cert] Updated : {cert.get('cert_cn')}") if resp else log.error(f"Cert {cert.get('cert_cn')}")
+                    # cert_uuid.append(resp.id)
+            else:
+                certificate = certificates_attr.create(data)
+                log.debug("[Cert] Created") if certificate else log.error(f"Cert {cert.get('cert_cn')}")
+            cert_uuid.append(certificate.id)
+        self.certificates_uuid = cert_uuid
+
+    def cert_parser(self, cert_data):
         """Cert Parser.
 
         Cert dict will have three keys: cert_cn, cert_issuer, and cert_serial.
@@ -135,621 +302,162 @@ class nautobot_fun:
         Also concert Date and time format to Nautobot compatible format.
 
         Args:
-            cert (dict): Cert Info
+            cert_data (dict): Cert Info
         """
-        self.cert = {}
-        for k, v in cert.items():
-            self.cert[k] = v
-        if cert.get("cert_issuer"):
-            self.cert["cert_issuer"] = {}
+        log.debug(f"[Cert] Before Parser : {cert_data}")
+        cert = {"serial": cert_data.get("cert_serial", "1234")}
+        cert["cn"] = cert_data.get("cert_cn", "")
+        if cert_data.get("cert_issuer"):
+            cert["issuer"] = {}
             dc = []
-            for c in cert.get("cert_issuer").split(","):
+            for c in cert_data.get("cert_issuer").split(","):
                 if "=" in c and "DC=" in c:
                     dc.append(c.split("=")[1])
                 elif "=" in c:
-                    self.cert["cert_issuer"][c.split("=")[0]] = c.split("=")[1]
+                    cert["issuer"][c.split("=")[0].strip()] = c.split("=")[1].split('/')[0].strip()
             if dc:
-                self.cert["cert_issuer"]["DC"] = "-".join(dc)
-        if cert.get("cert_exp"):
-            dateformat = datetime.strptime(cert.get("cert_exp"), "%b %d %H:%M:%S %Y %Z")
-            self.cert["cert_exp"] = dateformat.strftime("%Y-%m-%dT%H:%M:%SZ")
+                cert["issuer"]["DC"] = "-".join(dc)
+        if cert_data.get("cert_exp"):
+            dateformat = datetime.strptime(cert_data.get("cert_exp"), "%b %d %H:%M:%S %Y %Z")
+            cert["exp"] = dateformat.strftime("%Y-%m-%dT%H:%M:%SZ")
+        log.debug(f"[Cert] After Parser : {cert}")
+        self.cert_info = cert
 
-    def get_cert(self):
-        """Check if Cert object exist in VIP Plugin module."""
-        obj = f"plugins/vip-tracker/certificates/?name={self.cert.get('cert_cn')}"
-        resp = self.get_api_call(obj)
-        if resp.get("count") == 0:
-            self.create_update_cert()
-        elif resp.get("count") == 1:
-            if resp["results"][0].get("serial_number") == self.cert.get("cert_serial"):
-                self.cert_uuid.append(resp["results"][0].get("id"))
-            else:
-                self.create_update_cert(resp["results"][0].get("id"))
+    def cert_issuer(self):
+        """Create Certificate Issuer object in VIP Plugin module."""
+        # log.info(self.cert_info["issuer"].get("CN"))
+        issuer = issuer_attr.get(name=self.cert_info["issuer"].get("CN"))
+        if not issuer:
+            self.cert_organization_uuid = ""
+            self.cert_organization()
+            data = {
+                "name": self.cert_info["issuer"].get("CN"),
+                "slug": self.slug_parser(self.cert_info["issuer"].get("CN")),
+                "country":  self.cert_info["issuer"].get("C", ""),
+                "location": self.cert_info["issuer"].get("L", ""),
+                "state": self.cert_info["issuer"].get("ST", ""),
+                "email": self.cert_info["issuer"].get("emailAddress", ""),
+                "organization": self.cert_organization_uuid,
+            }
+            issuer = issuer_attr.create(data)
+            log.debug("[Issuer] Created") if issuer else log.error(f"Issuer {self.cert_info['issuer'].get('CN')}")
+        self.cert_issuer_uuid = issuer.id
 
-    def create_update_cert(self, uuid=False):
-        """Create new or update existing cert object in VIP Plugin module.
-
-        Args:
-            uuid (bool, optional): Update existing cert object. Defaults to False.
-        """
-        org = (
-            self.cert["cert_issuer"].get("DC")
-            if self.cert["cert_issuer"].get("DC")
-            else self.cert["cert_issuer"].get("O", "UNKNOWN")
-        )
-        self.get_org(org)
-        self.get_issuer()
-        if hasattr(self, "cert_issuer_uuid"):
-            obj = "plugins/vip-tracker/certificates/"
-            data = dict(
-                [
-                    ("name", self.cert.get("cert_cn")),
-                    ("slug", self.cert.get("cert_cn").replace(" ", "-").replace(".", "_").replace("*", "").lower(),),
-                    ("exp", self.cert.get("cert_exp", "2000-01-01T00:00")),
-                    ("serial_number", self.cert.get("cert_serial", "")),
-                    ("issuer", self.cert_issuer_uuid),
-                    ("cert_type", "RSA"),
-                ]
-            )
-            if uuid:
-                obj = f"plugins/vip-tracker/certificates/{uuid}/"
-                if self.patch_api_call(obj, **data) == 200:
-                    self.cert_uuid.append(uuid)
-                    self.log.debug("Cert Info updated on Nautobot")
-            else:
-                resp = self.post_api_call(obj, **data)
-                if resp:
-                    self.cert_uuid.append(resp.get("id"))
-
-    def get_issuer(self):
-        """Check if Issuer object exist in VIP Plugin module."""
-        obj = f"plugins/vip-tracker/issuer/?name={self.cert['cert_issuer'].get('CN')}"
-        resp = self.get_api_call(obj)
-        if resp.get("count") == 0:
-            obj = "plugins/vip-tracker/issuer/"
-            data = dict(
-                [
-                    ("name", self.cert["cert_issuer"].get("CN")),
-                    (
-                        "slug",
-                        self.cert["cert_issuer"].get("CN").replace(" ", "-").replace(".", "_").replace("*", "").lower(),
-                    ),
-                    ("country", self.cert["cert_issuer"].get("C", "")),
-                    ("location", self.cert["cert_issuer"].get("L", "")),
-                    ("state", self.cert["cert_issuer"].get("ST", "")),
-                    ("email", self.cert["cert_issuer"].get("emailAddress", "")),
-                    ("organization", self.cert_org_uuid),
-                ]
-            )
-            resp = self.post_api_call(obj, **data)
-            if resp:
-                self.cert_issuer_uuid = resp.get("id")
-        elif resp.get("count") == 1:
-            self.cert_issuer_uuid = resp["results"][0].get("id")
-
-    def get_org(self, org):
-        """Check if Organization object exist in VIP Plugin module.
-
-        Args:
-            org (str): Organization name from cert issuer field.
-        """
-        obj = f"plugins/vip-tracker/organization/?name={org}"
-        resp = self.get_api_call(obj)
-        if resp.get("count") == 0:
-            obj = "plugins/vip-tracker/organization/"
-            data = dict([("name", org), ("slug", org.replace(" ", "-").replace(".", "_").replace("*", "").lower())])
-            resp = self.post_api_call(obj, **data)
-            if resp:
-                self.cert_org_uuid = resp.get("id")
-        elif resp.get("count") == 1:
-            self.cert_org_uuid = resp["results"][0].get("id")
-
-    ###########################################
-    # VIP related functions
-    ###########################################
-
-    def get_vip(self):
-        """Check if VIP object exist in VIP Plugin module."""
-        self.vip_addr_uuid = self.get_address(self.vip_data.get("address"))
-        if self.vip_addr_uuid:
-            obj = (
-                f"plugins/vip-tracker/vip-detail/?name={self.vip_data.get('name')}&environment={self.env_uuid}"
-                f"&address={self.vip_addr_uuid}&port={self.vip_data.get('port')}"
-            )
-            resp = self.get_api_call(obj)
-            if resp.get("count") == 1:
-                self.update_vip(resp["results"][0])
-            else:
-                self.create_vip()
-        else:
-            self.create_vip()
-
-    def create_vip(self):
-        """Create VIP object in VIP Plugin module."""
-        if (vip_addr_uuid := self.get_address(self.vip_data.get("address"), True)) is not None:
-            self.vip_addr_uuid = vip_addr_uuid
-            self.get_pool()
-            obj = "plugins/vip-tracker/vip/"
-            data = dict(
-                [
-                    ("name", self.vip_data.get("name")),
-                    ("port", self.vip_data.get("port")),
-                    ("address", self.vip_addr_uuid),
-                    ("pool", self.vip_pool_uuid),
-                    ("certificates", self.cert_uuid),
-                    ("loadbalancer", self.lb_uuid),
-                    ("partition", self.partition_uuid),
-                    ("environment", self.env_uuid),
-                    ("advanced_policies", self.advp_uuid),
-                    ("protocol", self.vip_data.get("protocol", "TCP").upper()),
-                    ("tags", self.tag),
-                ]
-            )
-            resp = self.post_api_call(obj, **data)
-            if resp:
-                self.log.debug("VIP created on Nautobot")
-        else:
-            self.log.error("Unable to create VIP UUID")
-
-    def update_vip(self, n_vip):
-        """Update existing VIP object in VIP Plugin module.
-
-        Args:
-            n_vip (dict): VIP info.
-        """
-        uuid = n_vip.get("id")
-        data = {}
-        self.get_pool()
-        data["loadbalancer"] = self.lb_uuid
-        data["pool"] = self.vip_pool_uuid
-        data["environment"] = self.env_uuid
-        data["advanced_policies"] = self.advp_uuid
-        data["certificates"] = self.cert_uuid
-        data["tags"] = self.tag
-
-        obj = f"plugins/vip-tracker/vip/{uuid}/"
-        if self.patch_api_call(obj, **data) == 200:
-            self.log.debug("VIP updated on Nautobot")
+    def cert_organization(self):
+        """Create Certificate Organization object in VIP Plugin module."""
+        org = self.cert_info["issuer"].get("O", "UNKNOWN")
+        organization = organization_attr.get(name=org)
+        if not organization:
+            data = {"name": org, "slug": self.slug_parser(org)}
+            organization = organization_attr.create(data)
+            log.debug("[Organization] Created") if organization else log.error(f"Organization {org}")
+        self.cert_organization_uuid = organization.id
 
     ###########################################
     # Pool related functions
     ###########################################
 
-    def get_pool(self):
-        """Check if pool object exist in VIP Plugin module."""
-        self.get_pool_mem_addr()
-        name = self.vip_data.get("pool")
-        obj = f"plugins/vip-tracker/pools?name={name}"
-        resp = self.get_api_call(obj)
-        if resp["count"] >= 1:
-            self.vip_pool_uuid = resp["results"][0]["id"]
-            if resp["results"][0]["members"] != self.pool_mem_uuid:
-                self.update_pool()
-            else:
-                self.log.debug(f"No change in Pool Members list : {name}")
+    def pool(self):
+        """Create Pool Member object in VIP Plugin module."""
+        pools = pools_attr.get(name=self.vip_data.get("pool"))
+        data = {
+            "name": self.vip_data.get("pool"),
+            "slug": self.slug_parser(self.vip_data.get("pool")),
+            "members": self.members_uuid,
+            # "tags": self.tag_uuid
+        }
+        if pools:
+            pool = pools.update(data)
+            if pool:
+                log.debug(f"[Pool] Updated {self.vip_data.get('pool')}")
         else:
-            self.create_pool()
+            pools = pools_attr.create(data)
+            log.debug("[Pool] Created") if pools else log.error(f"{self.vip_data.get('pool')}")
+        self.pool_uuid = pools.id
 
-    def create_pool(self):
-        """Create pool object in VIP Plugin module."""
-        obj = "plugins/vip-tracker/pools/"
-        data = dict(
-            [
-                ("name", self.vip_data["pool"]),
-                ("slug", self.vip_data["pool"].replace(" ", "-").replace(".", "_").replace("*", "").lower()),
-                ("members", self.pool_mem_uuid),
-            ]
-        )
-        resp = self.post_api_call(obj, **data)
-        if resp:
-            self.vip_pool_uuid = resp["id"]
-
-    def update_pool(self):
-        """Update existing pool object in VIP Plugin module."""
-        obj = f"plugins/vip-tracker/pools/{self.vip_pool_uuid}/"
-        data = dict([("members", self.pool_mem_uuid)])
-        if self.patch_api_call(obj, **data) == 200:
-            self.log.debug("VIP Pool updated on Nautobot")
-
-    ###########################################
-    # Pool members related functions
-    ###########################################
-
-    def get_pool_mem_addr(self):
-        """Check if pool member object exist in VIP Plugin module."""
-        self.pool_mem_parser()
-        self.pool_mem_uuid = []
-        for mem_info in self.pool_mem_info:
-            obj = f"plugins/vip-tracker/members/?address={mem_info.get('uuid')}&name={mem_info.get('name')}"
-            resp = self.get_api_call(obj)
-            if resp["count"] >= 1:
-                self.pool_mem_uuid.append(resp["results"][0]["id"])
-            else:
-                self.create_pool_mem_addr(mem_info)
-
-    def create_pool_mem_addr(self, mem_info):
-        """Pool Member.
-
-        Create pool member object in VIP Plugin module.
-        Check if pool member is 1.1.1.1 IP address and action accordingly.
-
-        Args:
-            mem_info (dict): Pool member info from pool_mem_parser function.
-        """
+    def members(self):
+        """Create Pool Member object in VIP Plugin module."""
+        members = []
         port = 1
-        if "1.1.1.1" in str(self.vip_data.get("pool_mem")):
-            self.dport = self.dport + 1
-            port = self.dport
-            self.log.debug(self.dport)
-        data = dict(
-            [
-                ("address", mem_info.get("uuid")),
-                ("name", mem_info.get("name")),
-                ("slug", mem_info.get("slug")),
-                ("port", port),
-                ("tags", self.tag),
-            ]
-        )
-        obj = "plugins/vip-tracker/members/"
-        resp = self.post_api_call(obj, **data)
-        if resp:
-            self.pool_mem_uuid.append(resp["id"])
-        else:
-            self.log.error(f"Unable to create Pool Member : {mem_info}")
-
-    ###########################################
-    # Pool member parser from input data
-    ###########################################
+        self.pool_mem_parser()
+        for mem in self.pool_mem_info:
+            # member = members_attr.get(name=mem.get("name"))
+            mem_uuid = self.ipam_address(mem.get("address"))
+            member = members_attr.get(address=mem_uuid)
+            if member:
+                members.append(member.id)
+            else:
+                if "1.1.1.1" in str(mem.get("address")):
+                    self.dport = self.dport + 1
+                    port = self.dport
+                # mem_uuid = self.ipam_address(mem.get("address"))
+                data = {
+                    "name": mem.get("name").replace("%",""),
+                    "slug": self.slug_parser(mem.get("name")),
+                    "address": mem_uuid,
+                    "port": port,
+                    "tags": self.tag_uuid
+                }
+                member = members_attr.create(data)
+                log.debug("[Member] Created") if member else log.error(f"{mem.get('name')}")
+                members.append(member.id)
+        # log.info(f"members: {members}")
+        self.members_uuid = members
 
     def pool_mem_parser(self):
         """Convert pool member info into dict format to create pool."""
-
-        def _parser(slug_name):
-            """Replace special charaters for slug name.
-
-            Args:
-                slug_name (str): Slug name.
-
-            Returns:
-                str: Slug name with no special characters.
-            """
-            return slug_name.replace(".", "_").replace("/", "_")
-
         self.pool_mem_info = []
         if isinstance(self.vip_data.get("pool_mem"), str):
             self.pool_mem_info.append(
                 {
-                    "uuid": self.get_address(self.vip_data.get("pool_mem"), True),
-                    "slug": _parser(self.vip_data.get("pool_mem")),
                     "name": self.vip_data.get("pool_mem"),
+                    "address": self.vip_data.get("pool_mem"),
                 }
             )
         elif isinstance(self.vip_data.get("pool_mem"), list):
             for addr in self.vip_data.get("pool_mem"):
                 if isinstance(addr, dict):
-                    self.pool_mem_info.append(
-                        {
-                            "uuid": self.get_address(addr.get("address"), True),
-                            "slug": _parser(addr.get("name")).lower(),
-                            "name": addr.get("name"),
-                        }
-                    )
+                    self.pool_mem_info.append(addr)
                 else:
-                    self.pool_mem_info.append(
-                        {"uuid": self.get_address(addr, True), "slug": _parser(addr), "name": addr}
-                    )
+                    self.pool_mem_info.append({"name": addr, "address": addr})
 
     ###########################################
-    # Partition and Advance Policies
+    # IP Address and Slug Parser functions
     ###########################################
 
-    def get_partition(self):
-        """Check if partition object exist in VIP Plugin module."""
-        self.partition_uuid = ""
-        self.advp_uuid = []
-        if self.vip_data.get("partition"):
-            obj = f"plugins/vip-tracker/partitions/?name={self.vip_data.get('partition')}"
-            resp = self.get_api_call(obj)
-            if resp["count"] >= 1:
-                self.partition_uuid = resp["results"][0]["id"]
-            else:
-                self.create_partition()
-            self.get_adv_policy()
-
-    def create_partition(self):
-        """Create partition object in VIP Plugin module."""
-        data = dict([("name", self.vip_data.get("partition")), ("slug", self.vip_data.get("partition").lower())])
-        obj = "plugins/vip-tracker/partitions/"
-        resp = self.post_api_call(obj, **data)
-        self.partition_uuid = resp["id"]
-
-    def get_adv_policy(self):
-        """Check if Advance policy object exist in VIP Plugin module."""
-        for pol in self.vip_data.get("advanced_policies", []):
-            obj = f"plugins/vip-tracker/policies/?name={pol}"
-            resp = self.get_api_call(obj)
-            if resp["count"] >= 1:
-                self.advp_uuid.append(resp["results"][0]["id"])
-            else:
-                self.create_adv_policy(pol)
-
-    def create_adv_policy(self, pol):
-        """Create Advance policy object in VIP Plugin module.
+    def ipam_address(self, address):
+        """Create IP Address object in core IPAM module.
 
         Args:
-            pol (str): Advance policy object name.
-        """
-        data = dict([("name", pol), ("slug", pol.lower().replace("/", "_").replace(".", "_"))])
-        obj = "plugins/vip-tracker/policies/"
-        resp = self.post_api_call(obj, **data)
-        if resp:
-            self.advp_uuid.append(resp["id"])
-        else:
-            self.log.error(f"Unable to create Advance Policy : {data}")
-
-    #################################
-    # Device related functions
-    #################################
-
-    def get_loadbalancer(self, lb_data):
-        """Check if loadbalancer object exist in core Device module.
-
-        Args:
-            lb_data (dict): LB related info.
-        """
-        self.lb_data = lb_data
-        if not hasattr(self, "tag"):
-            self.get_tags(self.lb_data.get("tags"))
-        name = self.lb_data.get("hostname")
-        obj = f"dcim/devices/?name={name}"
-        resp = self.get_api_call(obj)
-        if resp["count"] == 1:
-            self.lb_uuid = resp["results"][0]["id"]
-        else:
-            self.create_loadbalancer()
-
-    def create_loadbalancer(self):
-        """Create loadbalancer object in core Device module."""
-        self.get_device_type()
-        if hasattr(self, "device_type_uuid"):
-            self.get_device_role()
-            if hasattr(self, "device_role_uuid"):
-                self.get_site()
-                if hasattr(self, "site_uuid"):
-                    data = dict(
-                        [
-                            ("name", self.lb_data.get("hostname")),
-                            ("device_type", self.device_type_uuid),
-                            ("device_role", self.device_role_uuid),
-                            ("site", self.site_uuid),
-                            ("status", "active"),
-                            ("tags", self.tag),
-                        ]
-                    )
-                    resp = self.post_api_call("dcim/devices/", **data)
-                    if resp:
-                        self.lb_uuid = resp["id"]
-
-    def get_device_type(self):
-        """Check if device type object exist in core Device module."""
-        obj = f"dcim/device-types/?model={self.lb_data.get('type','ltm')}"
-        resp = self.get_api_call(obj)
-        if resp["count"] == 1:
-            self.device_type_uuid = resp["results"][0]["id"]
-        else:
-            self.create_device_type()
-
-    def create_device_type(self):
-        """Create device type object in core Device module."""
-        obj = "dcim/device-types/"
-        model = self.lb_data.get("type", "ltm").lower()
-        data = dict([("manufacturer", self.get_manufacturers()), ("model", model), ("slug", model)])
-        resp = self.post_api_call(obj, **data)
-        if resp:
-            self.device_type_uuid = resp["id"]
-
-    def get_device_role(self):
-        """Check if device role object exist in core Device module."""
-        obj = "dcim/device-roles?name=load_balancer"
-        resp = self.get_api_call(obj)
-        if resp["count"] == 1:
-            self.device_role_uuid = resp["results"][0]["id"]
-        else:
-            self.create_device_role()
-
-    def create_device_role(self):
-        """Create device role object in core Device module."""
-        obj = "dcim/device-roles/"
-        resp = self.post_api_call(obj, **NAUTOBOT_DEVICE_ROLES["LB"])
-        if resp:
-            self.device_type_uuid = resp["id"]
-
-    def get_tags(self, tags):
-        """Check if tag object exist in core Organization module.
-
-        Args:
-            tags (list): list of tag names.
-        """
-        for tag in tags:
-            obj = f"extras/tags/?slug={tag}"
-            resp = self.get_api_call(obj)
-            if resp["count"] == 0:
-                self.create_tags(tag)
-        self.tag = [{"slug": tag.lower()} for tag in tags]
-
-    def create_tags(self, tag):
-        """Create tag object in core Organization module.
-
-        Args:
-            tag (str): tag name.
-        """
-        obj = "extras/tags/"
-        data = dict([("name", tag.upper()), ("slug", tag.lower())])
-        self.post_api_call(obj, **data)
-
-    #################################################
-    # Site, Region and Manufacturer related functions
-    #################################################
-
-    def get_manufacturers(self):
-        """Check if Manufacturers object exist in core Device module.
+            address (str): IP Address.
 
         Returns:
-            str: UUID of the Manufacturer object.
+            str: IP Address UUID.
         """
-        name = "f5" if "product" in self.lb_data else "citrix"
-        obj = f"dcim/manufacturers/?slug={name}"
-        resp = self.get_api_call(obj)
-        if resp["count"] == 1:
-            return resp["results"][0]["id"]
-        else:
-            self.log.error(f"Manufacturer Not Found On Nautobot : {obj}")
+        ipam_addr = ip_addresses_attr.filter(address=address)
+        ipam_address = False
+        for addr in ipam_addr:
+            tag1 = self.vip_data.get("tags")
+            tag2 = [i.slug for i in addr.tags]
+            tag2.sort()
+            tag1.sort()
+            if address == addr.address.split("/")[0] and tag1 == tag2:
+                ipam_address = addr
+        if not ipam_address:
+            data = dict([("address", address), ("status", "active"), ("tags", self.tag_uuid)])
+            ipam_address = ip_addresses_attr.create(data)
+            log.debug("[Address] Created") if ipam_address else log.error(f"Address {address}")
+        return ipam_address.id
 
-    def get_site(self):
-        """Get Site.
+    def slug_parser(self, name):
+        """Slug name parser.
 
-        LB Name are not as per standards. Static config file has hostname and site mapping.
-        For OFD, NAUTOBOT_DEVICE_REGION and for OFS, NAUTOBOT_DEVICE_REGION_OFS
-        Lookup config file and find appropriate site name match for OFS and OFD device.
-        """
-
-        def site(name):
-            """Check if Site object exist in core Organization module.
-
-            Args:
-                name (str): Site name.
-            """
-            obj = f"dcim/sites/?slug={name.get('site').lower()}"
-            resp = self.get_api_call(obj)
-            if resp["count"] == 1:
-                self.site_uuid = resp["results"][0]["id"]
-            else:
-                self.create_site(name)
-
-        if "ofd" in self.lb_data.get("tags"):
-            lb_dkey = self.lb_data.get("hostname")[:6]
-            if lb_dkey in NAUTOBOT_DEVICE_REGION.keys():
-                site(NAUTOBOT_DEVICE_REGION[lb_dkey])
-            else:
-                site(NAUTOBOT_DEVICE_REGION.get("SANE_UNK"))
-        elif "ofs" in self.lb_data.get("tags"):
-            octate = ".".join(self.lb_data.get("address").split(".", 2)[:2])
-            if octate in NAUTOBOT_DEVICE_REGION_OFS.keys():
-                site(NAUTOBOT_DEVICE_REGION_OFS[octate])
-            else:
-                octate = ".".join(self.lb_data.get("mgmt_ip_address").split(".", 2)[:2])
-                if octate in NAUTOBOT_DEVICE_REGION_OFS.keys():
-                    site(NAUTOBOT_DEVICE_REGION_OFS[octate])
-                else:
-                    site(NAUTOBOT_DEVICE_REGION.get("SANE_UNK"))
-        else:
-            site(NAUTOBOT_DEVICE_REGION.get("SANE_UNK"))
-
-    def create_site(self, name):
-        """Create site object in core Organization module.
+        Replace all special characters and space with "_" and covert to lower case.
 
         Args:
-            name (str): Site name.
-        """
-        obj = "dcim/sites/"
-        self.get_region(name)
-        data = dict(
-            [
-                ("name", name.get("site").upper()),
-                ("slug", name.get("site").lower()),
-                ("status", "active"),
-                ("region", self.region_uuid),
-                ("description", name.get("description", "")),
-            ]
-        )
-        resp = self.post_api_call(obj, **data)
-        if resp:
-            self.site_uuid = resp["id"]
-
-    def get_region(self, name):
-        """Check if Region object exist in core Organization module.
-
-        Args:
-            name (str): Region name.
-        """
-        obj = f"dcim/regions/?name={name.get('region')}"
-        resp = self.get_api_call(obj)
-        if resp["count"] == 1:
-            self.region_uuid = resp["results"][0]["id"]
-        else:
-            self.create_region(name)
-
-    def create_region(self, name):
-        """Create region object in core Organization module.
-
-        Args:
-            name ([type]): [description]
-        """
-        obj = "dcim/regions/"
-        data = dict([("name", name.get("region")), ("slug", name.get("region").replace(" ", "-").lower())])
-        resp = self.post_api_call(obj, **data)
-        if resp:
-            self.region_uuid = resp["id"]
-
-    #################################
-    # GET, POST, PATCH API Function
-    #################################
-
-    def get_api_call(self, obj):
-        """GET API call function.
-
-        Args:
-            obj (str): URI path.
+            name (str): Object name.
 
         Returns:
-            dict: Data in dict format.
+            str: Object name.
         """
-        try:
-            self.log.info(obj)
-            resp = self.NB.nb_data("GET", obj, **{})
-            if resp.status_code == 200:
-                self.log.debug(f"GET Data obj={obj}, resp={resp.status_code} : {json.loads(resp.text)['count']}")
-                return json.loads(resp.text)
-            self.log.debug(f"GET Data obj={obj}, resp={resp.status_code}")
-        except Exception as err:
-            self.log.error(f"Unable to GET obj={obj}, error={err}")
-
-    def patch_api_call(self, obj, **data):
-        """PATCH API call function.
-
-        Args:
-            obj (str): URI path.
-
-        Returns:
-            dict: Data in dict format.
-        """
-        payload = {"data": data}
-        try:
-            self.log.info(f"PATCH Data obj={obj}, data={data}")
-            resp = self.NB.nb_data("PATCH", obj, **payload)
-            self.log.debug(f"PATCH Data obj={obj}, data={data}, resp={resp.status_code}")
-            if resp.status_code == 200:
-                return resp.status_code
-            self.log.error(f"Unable to PATCH obj={obj}, data={data}, resp={resp.status_code} : {resp.text}")
-        except Exception as err:
-            self.log.error(f"Unable to PATCH obj={obj}, data={data}, error={err}")
-
-    def post_api_call(self, obj, **data):
-        """POST API call function.
-
-        Args:
-            obj (str): URI path.
-
-        Returns:
-            dict: Data in dict format.
-        """
-        payload = {"data": data}
-        try:
-            self.log.info(f"POST Data obj={obj}, data={data}")
-            resp = self.NB.nb_data("POST", obj, **payload)
-            self.log.debug(f"POST Data obj={obj}, data={data}, resp={resp.status_code}")
-            if resp.status_code == 201:
-                return json.loads(resp.text)
-            self.log.error(f"Unable to POST obj={obj}, data={data}, resp={resp.status_code} : {resp.text}")
-        except Exception as err:
-            self.log.error(f"Unable to POST obj={obj}, data={data}, error={err}")
+        return name.replace(" ", "-").replace(".", "_").replace("*", "").replace("/", "_").replace("%", "_").lower()

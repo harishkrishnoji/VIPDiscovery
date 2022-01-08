@@ -1,38 +1,23 @@
-# pylint: disable=W1203, C0103, W0631
+# pylint: disable=W1203, C0103, W0631, W0703
 """Nautobot Master."""
 
-from helper.script_conf import log
-from nautobot.nautobot_fun import nautobot_fun
+from nautobot.nautobot_fun import *
 
-# document_state:
-#     rec: Status of document/record has been updated or not.
-#     status: Status of document/record if it active or need to be deleted.
+def NautobotClient(lb_data):
+    device_data = lb_data.copy()
+    device_data.pop("vips","")
+    log.info(f"[Device] Updated {lb_data.get('hostname')} : {len(lb_data.get('vips', []))}")
+    device = LB_DEVICE(device_data)
+    device.device()
+    loadbalancer_uuid = device.loadbalancer_uuid
+    tag_uuid = device.tag_uuid
+    for vip in lb_data.get("vips", []):
+        try:
+            vip_object = LB_VIP(vip, loadbalancer_uuid, tag_uuid)
+            vip_object.main_fun()
+        except Exception as err:
+            log.error(f"[VIP] {vip.get('name')} : {err}")
 
-DOC_REC_DEVICE = "no_change"
-DOC_REC_VIP = "delete"
-
-
-def nautobot_master(db, NB):
-    """Create or Update all lb devices on nautobot. Create or Update all VIPs on nautobot."""
-    log.info(f"Updating device : {DOC_REC_DEVICE}")
-    devices = db.get_document("device", DOC_REC_DEVICE)
-    nbf = nautobot_fun(NB)
-    for lb in devices:
-        log.info(f"{lb.get('hostname')}")
-        nbf.get_loadbalancer(lb)
-    log.info("Updating device status to default..")
-    db.update_host_status()
-    log.info(f"Updating VIP : {DOC_REC_VIP}")
-    vips = db.get_document("vip", DOC_REC_VIP)
-    for vip in vips:
-        nbf.get_loadbalancer(vip.get("loadbalancer"))
-        if hasattr(nbf, "lb_uuid"):
-            log.info(f"LB Name: {vip.get('loadbalancer')}, VIP Name: {vip.get('name')}")
-            nb_v = nautobot_fun(NB, nbf.lb_uuid)
-            nb_v.main_fun(vip)
-            del nbf.lb_uuid
-        else:
-            log.error(f"[{lb['hostname']}] not found on Nautobot")
-    log.info("Updating VIP status to default..")
-    db.update_vip_status()
-    log.info("Update Complete")
+# if __name__ == "__main__":
+#     lb_data = test_data1
+#     NautobotClient(lb_data)
