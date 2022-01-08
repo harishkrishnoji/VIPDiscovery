@@ -11,8 +11,8 @@ from datetime import datetime
 
 requests.urllib3.disable_warnings()
 
-url                     = os.environ.get("RD_OPTION_NAUTOBOT_URL")
-# url                     = "https://nautobot.onefiserv.net/"
+# url                     = os.environ.get("RD_OPTION_NAUTOBOT_URL")
+url                     = "https://nautobot.onefiserv.net/"
 token                   = os.environ.get("RD_OPTION_NAUTOBOT_KEY")
 nb                      = pynautobot.api(url, token=token)
 nb.http_session.verify  = False
