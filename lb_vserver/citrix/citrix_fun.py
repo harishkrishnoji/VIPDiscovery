@@ -5,6 +5,7 @@ import json
 from helper.local_helper import log
 from helper.lb_helper import NS_API_DATA
 
+
 def pull_sgrp_info(vs_name, adm):
     """Get ServiceGroup for given VServer.
 

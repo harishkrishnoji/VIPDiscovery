@@ -1,7 +1,6 @@
 # pylint: disable=W1203, C0103, W0631
 """Script local config."""
 
-
 #########################################################################
 #   Mandatory keys/value required to create VIP in Nautobot
 #########################################################################
@@ -78,7 +77,6 @@ DISREGARD_LB_F5 = list(
         # "BRSPA2ASMINT01B.1dc.com",
         # "INBOM1ASMINT01B.1dc.com",
         # "USOMA1ASMINT01B.1dc.com",
-
         # OFS Devices
         # "ecdbkel02-guest02",  # ERROR DEVICES
         # "ecdbkel01-guest02",  # ERROR DEVICES

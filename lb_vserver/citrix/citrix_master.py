@@ -34,7 +34,14 @@ def citrix_master(adm, tags, ENV):
                 device["environment"] = ENV
 
         if device.get("environment") == ENV:
-            if (device['hostname'] not in DISREGARD_LB_CITRIX) and ((device['ha_master_state'] == 'Secondary' and device['instance_state'] == 'Up' and device['ipv4_address'] != '') or ('DEFRA1SLBSFA02A' in device['hostname'] and device['instance_state'] == 'Up')):
+            if (device["hostname"] not in DISREGARD_LB_CITRIX) and (
+                (
+                    device["ha_master_state"] == "Secondary"
+                    and device["instance_state"] == "Up"
+                    and device["ipv4_address"] != ""
+                )
+                or ("DEFRA1SLBSFA02A" in device["hostname"] and device["instance_state"] == "Up")
+            ):
                 # if device.get("hostname") == "AUSYD2SLBSFM01A-D2NR":
                 gather_vip_info(device, adm, ENV)
             else:

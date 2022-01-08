@@ -4,7 +4,7 @@
 import os
 import requests
 import pynautobot
-from helper.nautobot_helper import *
+from helper.nautobot_helper import NAUTOBOT_DEVICE_REGION, NAUTOBOT_DEVICE_REGION_OFS
 from helper.local_helper import log
 from helper.lb_helper import VIP_FIELDS
 from datetime import datetime
@@ -12,6 +12,7 @@ from datetime import datetime
 requests.urllib3.disable_warnings()
 
 url                     = os.environ.get("RD_OPTION_NAUTOBOT_URL")
+# url                     = "https://nautobot.onefiserv.net/"
 token                   = os.environ.get("RD_OPTION_NAUTOBOT_KEY")
 nb                      = pynautobot.api(url, token=token)
 nb.http_session.verify  = False
@@ -39,6 +40,7 @@ partitions_attr         = getattr(vip_tracker_attr, "partitions")
 policies_attr           = getattr(vip_tracker_attr, "policies")
 pools_attr              = getattr(vip_tracker_attr, "pools")
 
+
 class LB_DEVICE:
     """Create a Nautobot LB Device Function client."""
 
@@ -48,7 +50,7 @@ class LB_DEVICE:
         Args:
             device_data (dict): LB Device information in dict format.
         """
-        self.device_data            = device_data
+        self.device_data = device_data
 
     def device(self):
         """Check if loadbalancer object exist in core Device module."""
@@ -64,7 +66,7 @@ class LB_DEVICE:
                 "device_role": self.device_role_uuid,
                 "site": self.site_uuid,
                 "status": "active",
-                "tags": self.tag_uuid
+                "tags": self.tag_uuid,
             }
             device = devices_attr.create(data)
         self.loadbalancer_uuid = device.id
@@ -85,7 +87,7 @@ class LB_DEVICE:
             data = {
                 "manufacturer": self.manufacturer_uuid,
                 "model": self.device_data.get("type"),
-                "slug": self.slug_parser(self.device_data.get("type"))
+                "slug": self.slug_parser(self.device_data.get("type")),
             }
             device_type = device_types_attr.create(data)
         self.device_type_uuid = device_type.id
@@ -117,8 +119,8 @@ class LB_DEVICE:
             lb_dkey = self.device_data.get("hostname")[:6]
             if lb_dkey in NAUTOBOT_DEVICE_REGION.keys():
                 self.site_info = NAUTOBOT_DEVICE_REGION[lb_dkey]
-        elif "ofs" in self.lb_data.get("tags"):
-            octate = ".".join(self.lb_data.get("address").split(".", 2)[:2])
+        elif "ofs" in self.device_data.get("tags"):
+            octate = ".".join(self.device_data.get("address").split(".", 2)[:2])
             if octate in NAUTOBOT_DEVICE_REGION_OFS.keys():
                 self.site_info = NAUTOBOT_DEVICE_REGION_OFS[octate]
         site = sites_attr.get(slug=self.slug_parser(self.site_info.get("site")))
@@ -129,7 +131,7 @@ class LB_DEVICE:
                 "slug": self.slug_parser(self.site_info.get("site")),
                 "status": "active",
                 "region": self.region_uuid,
-                "description": self.site_info.get("description", "")
+                "description": self.site_info.get("description", ""),
             }
             site = sites_attr.create(data)
         self.site_uuid = site.id
@@ -178,13 +180,11 @@ class LB_VIP:
 
     def main_fun(self):
         """Main function, initiated from nautobot_master.
-        
+
         Validate if input vip info has all fields required to create Nautobot entry.
         Create partition and environment UUID, before initiating VIP function.
         """
-        self.dport = self.vip_data.get("dport")
-
-            
+        self.dport = self.vip_data.get("dport", 1)
         if all(x in list(self.vip_data) for x in VIP_FIELDS):
             try:
                 if self.vip_data.get("cert"):
@@ -199,9 +199,9 @@ class LB_VIP:
                 self.vip_address()
                 self.vip()
             except Exception as err:
-                log.error(f"[VIP] {self.vip_data.get('name')} : {err}")
+                log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
         else:
-            log.error(f"[Missing VIP Fields] {VIP_FIELDS} : {list(self.vip_data)}")
+            log.warring(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')}")
 
     def vip(self):
         """Create VIP object in VIP Plugin module."""
@@ -220,26 +220,39 @@ class LB_VIP:
             "tags": self.tag_uuid,
         }
         for vip in vips:
-            if (vip.address == self.vip_addr_uuid) and (str(vip.port) == str(self.vip_data.get("port"))) and (vip.protocol == self.vip_data.get("protocol")):
+            if (
+                (vip.address == self.vip_addr_uuid)
+                and (str(vip.port) == str(self.vip_data.get("port")))
+                and (vip.protocol == self.vip_data.get("protocol"))
+            ):
                 log.debug("[VIP] Delete")
                 vip.delete()
-        vip = vip_attr.create(data)
-        log.debug(f"[VIP] Created : {self.vip_data.get('name')}") if vip else log.error(f"VIP {self.vip_data.get('name')}")
-
+        try:
+            vip_attr.create(data)
+        except Exception as err:
+            log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} : {err}")
 
     ###########################################
     # VIP address functions
     ###########################################
     def vip_address(self):
+        """Create VIP Address."""
         self.vip_addr_uuid = self.ipam_address(self.vip_data.get("address"))
 
     def environment(self):
         """Create Environment object in VIP Plugin module."""
         environment = environments_attr.get(name=self.vip_data.get("environment"))
         if not environment:
-            data = {"name": self.vip_data.get("environment"), "slug": self.slug_parser(self.vip_data.get("environment"))}
-            environment = environments_attr.create(data)
-            log.debug("[Environment] Created") if environment else log.error(f"Environment {self.vip_data.get('environment')}")
+            data = {
+                "name": self.vip_data.get("environment"),
+                "slug": self.slug_parser(self.vip_data.get("environment")),
+            }
+            try:
+                environment = environments_attr.create(data)
+            except Exception as err:
+                log.error(
+                    f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {self.vip_data.get('environment')} : {err}"
+                )
         self.environment_uuid = environment.id
 
     def partition(self):
@@ -247,8 +260,12 @@ class LB_VIP:
         partition = partitions_attr.get(name=self.vip_data.get("partition"))
         if not partition:
             data = {"name": self.vip_data.get("partition"), "slug": self.slug_parser(self.vip_data.get("partition"))}
-            partition = partitions_attr.create(data)
-            log.debug("[Partition] Created") if partition else log.error(f"Partition {self.vip_data.get('partition')}")
+            try:
+                partition = partitions_attr.create(data)
+            except Exception as err:
+                log.error(
+                    f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {self.vip_data.get('partition')} : {err}"
+                )
         self.partition_uuid = partition.id
 
     def policies(self):
@@ -258,8 +275,10 @@ class LB_VIP:
             policies = policies_attr.get(name=policy)
             if not policies:
                 data = {"name": policy, "slug": self.slug_parser(policy)}
-                policies = policies_attr.create(data)
-                log.debug("[Policy] Created") if policies else log.error(f"Policy {policy}")
+                try:
+                    policies = policies_attr.create(data)
+                except Exception as err:
+                    log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {policy} : {err}")
             adv_policies.append(policies.id)
         self.policies_uuid = adv_policies
 
@@ -271,8 +290,9 @@ class LB_VIP:
         """Create Certificate object in VIP Plugin module."""
         cert_uuid = []
         for cert in self.vip_data.get("cert"):
-            certificate = certificates_attr.get(name=cert.get("cert_cn"))
             self.cert_parser(cert)
+            certificate = certificates_attr.get(name=self.cert_info.get("cn"))
+            self.cert_info
             self.cert_issuer()
             data = {
                 "name": self.cert_info.get("cn"),
@@ -283,13 +303,19 @@ class LB_VIP:
                 "cert_type": "RSA",
             }
             if certificate:
-                resp = certificate.update(data)
-                if resp:
-                    log.debug(f"[Cert] Updated : {cert.get('cert_cn')}") if resp else log.error(f"Cert {cert.get('cert_cn')}")
-                    # cert_uuid.append(resp.id)
+                try:
+                    certificate.update(data)
+                except Exception as err:
+                    log.error(
+                        f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {cert.get('cert_cn')} : {err}"
+                    )
             else:
-                certificate = certificates_attr.create(data)
-                log.debug("[Cert] Created") if certificate else log.error(f"Cert {cert.get('cert_cn')}")
+                try:
+                    certificate = certificates_attr.create(data)
+                except Exception as err:
+                    log.error(
+                        f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {cert.get('cert_cn')} : {err}"
+                    )
             cert_uuid.append(certificate.id)
         self.certificates_uuid = cert_uuid
 
@@ -306,7 +332,7 @@ class LB_VIP:
         """
         log.debug(f"[Cert] Before Parser : {cert_data}")
         cert = {"serial": cert_data.get("cert_serial", "1234")}
-        cert["cn"] = cert_data.get("cert_cn", "")
+        cert["cn"] = cert_data.get("cert_cn", "").split("/")[0]
         if cert_data.get("cert_issuer"):
             cert["issuer"] = {}
             dc = []
@@ -314,7 +340,7 @@ class LB_VIP:
                 if "=" in c and "DC=" in c:
                     dc.append(c.split("=")[1])
                 elif "=" in c:
-                    cert["issuer"][c.split("=")[0].strip()] = c.split("=")[1].split('/')[0].strip()
+                    cert["issuer"][c.split("=")[0].strip()] = c.split("=")[1].split("/")[0].strip()
             if dc:
                 cert["issuer"]["DC"] = "-".join(dc)
         if cert_data.get("cert_exp"):
@@ -333,14 +359,18 @@ class LB_VIP:
             data = {
                 "name": self.cert_info["issuer"].get("CN"),
                 "slug": self.slug_parser(self.cert_info["issuer"].get("CN")),
-                "country":  self.cert_info["issuer"].get("C", ""),
+                "country": self.cert_info["issuer"].get("C", ""),
                 "location": self.cert_info["issuer"].get("L", ""),
                 "state": self.cert_info["issuer"].get("ST", ""),
                 "email": self.cert_info["issuer"].get("emailAddress", ""),
                 "organization": self.cert_organization_uuid,
             }
-            issuer = issuer_attr.create(data)
-            log.debug("[Issuer] Created") if issuer else log.error(f"Issuer {self.cert_info['issuer'].get('CN')}")
+            try:
+                issuer = issuer_attr.create(data)
+            except Exception as err:
+                log.error(
+                    f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {self.cert_info['issuer'].get('CN')} : {err}"
+                )
         self.cert_issuer_uuid = issuer.id
 
     def cert_organization(self):
@@ -349,8 +379,10 @@ class LB_VIP:
         organization = organization_attr.get(name=org)
         if not organization:
             data = {"name": org, "slug": self.slug_parser(org)}
-            organization = organization_attr.create(data)
-            log.debug("[Organization] Created") if organization else log.error(f"Organization {org}")
+            try:
+                organization = organization_attr.create(data)
+            except Exception as err:
+                log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {org} : {err}")
         self.cert_organization_uuid = organization.id
 
     ###########################################
@@ -359,7 +391,7 @@ class LB_VIP:
 
     def pool(self):
         """Create Pool Member object in VIP Plugin module."""
-        pools = pools_attr.get(name=self.vip_data.get("pool"))
+        pools = pools_attr.get(slug=self.slug_parser(self.vip_data.get("pool")))
         data = {
             "name": self.vip_data.get("pool"),
             "slug": self.slug_parser(self.vip_data.get("pool")),
@@ -371,8 +403,12 @@ class LB_VIP:
             if pool:
                 log.debug(f"[Pool] Updated {self.vip_data.get('pool')}")
         else:
-            pools = pools_attr.create(data)
-            log.debug("[Pool] Created") if pools else log.error(f"{self.vip_data.get('pool')}")
+            try:
+                pools = pools_attr.create(data)
+            except Exception as err:
+                log.error(
+                    f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {self.vip_data.get('pool')} : {err}"
+                )
         self.pool_uuid = pools.id
 
     def members(self):
@@ -381,7 +417,6 @@ class LB_VIP:
         port = 1
         self.pool_mem_parser()
         for mem in self.pool_mem_info:
-            # member = members_attr.get(name=mem.get("name"))
             mem_uuid = self.ipam_address(mem.get("address"))
             member = members_attr.get(address=mem_uuid)
             if member:
@@ -390,18 +425,21 @@ class LB_VIP:
                 if "1.1.1.1" in str(mem.get("address")):
                     self.dport = self.dport + 1
                     port = self.dport
-                # mem_uuid = self.ipam_address(mem.get("address"))
                 data = {
-                    "name": mem.get("name").replace("%",""),
+                    "name": mem.get("name").replace("%", ""),
                     "slug": self.slug_parser(mem.get("name")),
                     "address": mem_uuid,
                     "port": port,
-                    "tags": self.tag_uuid
+                    "tags": self.tag_uuid,
                 }
-                member = members_attr.create(data)
-                log.debug("[Member] Created") if member else log.error(f"{mem.get('name')}")
+                try:
+                    member = members_attr.create(data)
+                    log.debug("[Member] Created")
+                except Exception as err:
+                    log.error(
+                        f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {mem.get('name')} : {err}"
+                    )
                 members.append(member.id)
-        # log.info(f"members: {members}")
         self.members_uuid = members
 
     def pool_mem_parser(self):
@@ -409,10 +447,7 @@ class LB_VIP:
         self.pool_mem_info = []
         if isinstance(self.vip_data.get("pool_mem"), str):
             self.pool_mem_info.append(
-                {
-                    "name": self.vip_data.get("pool_mem"),
-                    "address": self.vip_data.get("pool_mem"),
-                }
+                {"name": self.vip_data.get("pool_mem"), "address": self.vip_data.get("pool_mem"), }
             )
         elif isinstance(self.vip_data.get("pool_mem"), list):
             for addr in self.vip_data.get("pool_mem"):
@@ -445,8 +480,10 @@ class LB_VIP:
                 ipam_address = addr
         if not ipam_address:
             data = dict([("address", address), ("status", "active"), ("tags", self.tag_uuid)])
-            ipam_address = ip_addresses_attr.create(data)
-            log.debug("[Address] Created") if ipam_address else log.error(f"Address {address}")
+            try:
+                ipam_address = ip_addresses_attr.create(data)
+            except Exception as err:
+                log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {address} : {err}")
         return ipam_address.id
 
     def slug_parser(self, name):
