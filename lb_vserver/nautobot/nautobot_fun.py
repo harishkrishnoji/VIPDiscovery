@@ -201,7 +201,7 @@ class LB_VIP:
             except Exception as err:
                 log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
         else:
-            log.warring(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')}")
+            log.warning(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')}")
 
     def vip(self):
         """Create VIP object in VIP Plugin module."""
