@@ -185,7 +185,9 @@ class LB_VIP:
         Create partition and environment UUID, before initiating VIP function.
         """
         self.dport = self.vip_data.get("dport", 1)
-        if all(x in list(self.vip_data) for x in VIP_FIELDS):
+        if not self.vip_data.get("pool_mem"):
+            log.error(f"No Pool Members [{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')}")
+        elif all(x in list(self.vip_data) for x in VIP_FIELDS):
             try:
                 if self.vip_data.get("cert"):
                     self.certificates()
