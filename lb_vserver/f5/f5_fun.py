@@ -58,7 +58,7 @@ class F5HelperFun:
         """Get all ssl profile info for specific device UUID."""
         uri = "/rest-proxy/mgmt/tm/ltm/profile/client-ssl"
         resp = self.get_api_call(uri)
-        if resp:
+        if resp and hasattr(self, "cert_file"):
             self.ssl_profile = {
                 ssl_profile.get("name"): self.cert_file[ssl_profile.get("cert").split("/")[2]] for ssl_profile in resp
             }
@@ -103,18 +103,18 @@ class F5HelperFun:
             self.log.debug(f"[{len(resp)}] VIPs...")
             for vip in resp:
                 try:
+                    addr = vip.get("destination").split("/")[2].split(":")[0]
+                    port = vip.get("destination").split("/")[2].split(":")[1]
+                    if "%" in vip.get("destination"):
+                        addr = vip.get("destination").split("/")[2].split("%")[0]
+                        port = vip.get("destination").split("/")[2].split("%")[1].split(":")[1]
                     # Filter for VIPs which need to be discarded (DISREGARD_VIP) ex: '1.1.1.1'.
                     # For Testing and Troubleshooting, filter specific VIP (FILTER_VIP).
                     if (
-                        vip.get("destination") not in DISREGARD_VIP
+                        addr not in DISREGARD_VIP
                         and vip.get("pool")
                         and ("All" in FILTER_VIP or vip.get("name") in FILTER_VIP)
                     ):
-                        addr = vip.get("destination").split("/")[2].split(":")[0]
-                        port = vip.get("destination").split("/")[2].split(":")[1]
-                        if "%" in vip.get("destination"):
-                            addr = vip.get("destination").split("/")[2].split("%")[0]
-                            port = vip.get("destination").split("/")[2].split("%")[1].split(":")[1]
                         vip_info = dict(
                             [
                                 ("name", vip.get("name")),
@@ -165,5 +165,5 @@ class F5HelperFun:
             resp = self.f5.bigiq_api_call("GET", self.item.get("uuid"), uri)
             if resp.status_code == 200 and json.loads(resp.text).get("items"):
                 return json.loads(resp.text)["items"]
-        except Exception as err:
+        except Exception:
             log.error(f"GET API Server Error {uri}")
