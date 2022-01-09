@@ -11,8 +11,9 @@ VIP_FIELDS = list(["address", "port", "loadbalancer", "name", "pool", "pool_mem"
 #   List of Devices to pull data from BIG-IQ / ADM Netscaler
 #########################################################################
 
-F5_DEVICE_TO_QUERY = list(["USOMA1ASMINT02A.1dc.com"])
+F5_DEVICE_TO_QUERY = list(["BRHTL1ASMINT01A.1dc.com"])
 NS_DEVICE_TO_QUERY = list(["All"])
+FILTER_VIP = list(["All"])
 
 #########################################################################
 #   List of Keys/values which need to be collected from BIG-IQ / ADM Netscaler

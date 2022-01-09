@@ -3,7 +3,7 @@
 
 import json
 from helper.local_helper import log
-from helper.lb_helper import DISREGARD_VIP
+from helper.lb_helper import DISREGARD_VIP, FILTER_VIP
 
 
 class F5HelperFun:
@@ -103,7 +103,13 @@ class F5HelperFun:
             self.log.debug(f"[{len(resp)}] VIPs...")
             for vip in resp:
                 try:
-                    if vip.get("destination") not in DISREGARD_VIP and vip.get("pool"):
+                    # Filter for VIPs which need to be discarded (DISREGARD_VIP) ex: '1.1.1.1'.
+                    # For Testing and Troubleshooting, filter specific VIP (FILTER_VIP).
+                    if (
+                        vip.get("destination") not in DISREGARD_VIP
+                        and vip.get("pool")
+                        and ("All" in FILTER_VIP or vip.get("name") in FILTER_VIP)
+                    ):
                         addr = vip.get("destination").split("/")[2].split(":")[0]
                         port = vip.get("destination").split("/")[2].split(":")[1]
                         if "%" in vip.get("destination"):

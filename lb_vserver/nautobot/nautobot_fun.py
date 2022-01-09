@@ -229,8 +229,10 @@ class LB_VIP:
                 vip.delete()
         try:
             vip_attr.create(data)
+        except pynautobot.core.query.RequestError:
+            log.error(f"Duplicate VIP:Port [{self.vip_data.get('loadbalancer')}] {self.vip_data.get('address')}:{self.vip_data.get('port')}")
         except Exception as err:
-            log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} : {err}")
+            log.error(f"[2][{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
 
     ###########################################
     # VIP address functions
@@ -418,7 +420,11 @@ class LB_VIP:
         self.pool_mem_parser()
         for mem in self.pool_mem_info:
             mem_uuid = self.ipam_address(mem.get("address"))
+            # We cannot have member with same name and address.
+            # As work around, we are also checking if member exist by name.
             member = members_attr.get(address=mem_uuid)
+            if not member:
+                member = members_attr.get(name=mem.get("name"))
             if member:
                 members.append(member.id)
             else:
