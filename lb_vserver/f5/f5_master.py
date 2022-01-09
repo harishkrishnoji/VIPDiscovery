@@ -64,7 +64,7 @@ def device_list(f5):
             # For Test or Troubleshooting purpose
             # Filter the devices for which you want to discover VIPs
             if "All" in F5_DEVICE_TO_QUERY or device["hostname"] in F5_DEVICE_TO_QUERY:
-                log.info(f"{device['hostname']}")
+                log.debug(f"{device['hostname']}")
                 # Filter only the Fields/Keys which match F5_DEVICE_FIELDS
                 device_info.append(dict((i, device[i]) for i in F5_DEVICE_FIELDS))
         return device_stats(f5, device_info)

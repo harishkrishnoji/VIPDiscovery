@@ -8,10 +8,18 @@
 VIP_FIELDS = list(["address", "port", "loadbalancer", "name", "pool", "pool_mem"])
 
 #########################################################################
-#   List of Keys/values which need to be collected from ADM
+#   List of Devices to pull data from BIG-IQ / ADM Netscaler
 #########################################################################
 
-NS_DEVICE = list(
+F5_DEVICE_TO_QUERY = list(["USOMA1ASMINT02A.1dc.com"])
+NS_DEVICE_TO_QUERY = list(["All"])
+
+#########################################################################
+#   List of Keys/values which need to be collected from BIG-IQ / ADM Netscaler
+#########################################################################
+
+F5_DEVICE_FIELDS = list(["uuid", "address", "product", "version", "hostname"])
+NS_DEVICE_FIELDS = list(
     [
         "ha_ip_address",
         "ha_master_state",
@@ -30,28 +38,10 @@ NS_DEVICE = list(
 )
 
 #########################################################################
-#   List of Devices to pull data from BIG-IQ
-#########################################################################
-
-F5_DEVICE_TO_QUERY = list(["USOMA1ASMINT02A.1dc.com"])
-
-#########################################################################
-#   List of Keys/values which need to be collected from BIG-IQ
-#########################################################################
-
-F5_DEVICE_FIELDS = list(["uuid", "address", "product", "version", "hostname"])
-
-#########################################################################
 #   F5 Standalone devices
 #########################################################################
 
 F5_STANDALONE = list(["SLBAPP1", "OMA1GIOF5A"])
-
-#########################################################################
-#   Netscaler API Proxy Variable
-#########################################################################
-
-NS_API_DATA = dict([("proxy_key", "_MPS_API_PROXY_MANAGED_INSTANCE_IP")])
 
 #########################################################################
 #   List of VIPs which need to be disregarded from F5 devices
@@ -60,7 +50,7 @@ NS_API_DATA = dict([("proxy_key", "_MPS_API_PROXY_MANAGED_INSTANCE_IP")])
 DISREGARD_VIP = list(["0.0.0.0", "1.1.1.1", "2.2.2.2", "3.3.3.3", "4.4.4.4", "5.5.5.5", ":0"])
 
 #########################################################################
-#   List of LB instances to disregard
+#   List of LB instances to disregard from BIG-IQ / ADM Netscaler
 #########################################################################
 
 DISREGARD_LB_F5 = list(

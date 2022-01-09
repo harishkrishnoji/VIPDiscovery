@@ -1,10 +1,11 @@
 # pylint: disable=W1203, C0103, W0631, C0301, W0703, R1710, W0125
 """Citrix Master."""
 
+import os
 import json
 from citrix.citrix_fun import pull_vip_info, pull_sgrp_info, pull_cert_info
 from helper.local_helper import log
-from helper.lb_helper import DISREGARD_VIP, NS_DEVICE, DISREGARD_LB_CITRIX
+from helper.lb_helper import DISREGARD_VIP, NS_DEVICE_FIELDS, DISREGARD_LB_CITRIX
 from nautobot.nautobot_master import NautobotClient
 
 
@@ -60,8 +61,17 @@ def ns_device_lst(adm):
     try:
         resp = adm.adm_api_call()
         jresp = json.loads(resp.text)
-        log.debug(f"NS Device count : {len(jresp.get('ns'))}")
-        return list(dict((i, j[i]) for i in NS_DEVICE) for j in jresp["ns"])
+        log.debug(f"Netscaler Device count : {len(jresp.get('items'))}")
+        device_info = []
+        NS_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+        for device in jresp["items"]:
+            # For Test or Troubleshooting purpose
+            # Filter the devices for which you want to discover VIPs
+            if "All" in NS_DEVICE_TO_QUERY or device["hostname"] in NS_DEVICE_TO_QUERY:
+                log.debug(f"{device['hostname']}")
+                # Filter only the Fields/Keys which match NS_DEVICE_TO_QUERY
+                device_info.append(dict((i, device[i]) for i in NS_DEVICE_FIELDS))
+        return device_info
     except Exception as err:
         log.error(f"{err}")
 

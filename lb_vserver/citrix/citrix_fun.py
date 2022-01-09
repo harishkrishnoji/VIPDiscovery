@@ -3,7 +3,8 @@
 
 import json
 from helper.local_helper import log
-from helper.lb_helper import NS_API_DATA
+
+NS_API_DATA = dict([("proxy_key", "_MPS_API_PROXY_MANAGED_INSTANCE_IP")])
 
 
 def pull_sgrp_info(vs_name, adm):
