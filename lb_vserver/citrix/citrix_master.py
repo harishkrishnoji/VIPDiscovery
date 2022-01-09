@@ -61,10 +61,10 @@ def ns_device_lst(adm):
     try:
         resp = adm.adm_api_call()
         jresp = json.loads(resp.text)
-        log.debug(f"Netscaler Device count : {len(jresp.get('items'))}")
+        log.debug(f"Netscaler Device count : {len(jresp.get('ns'))}")
         device_info = []
         NS_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
-        for device in jresp["items"]:
+        for device in jresp["ns"]:
             # For Test or Troubleshooting purpose
             # Filter the devices for which you want to discover VIPs
             if "All" in NS_DEVICE_TO_QUERY or device["hostname"] in NS_DEVICE_TO_QUERY:
