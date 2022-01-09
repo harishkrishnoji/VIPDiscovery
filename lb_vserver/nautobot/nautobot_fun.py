@@ -503,4 +503,4 @@ class LB_VIP:
         Returns:
             str: Object name.
         """
-        return name.replace(" ", "-").replace(".", "_").replace("*", "").replace("/", "_").replace("%", "_").lower()
+        return name.replace(" ", "-").replace(".", "_").replace("*", "").replace("/", "_").replace("%", "_").replace("(", "").replace(")", "").lower()
