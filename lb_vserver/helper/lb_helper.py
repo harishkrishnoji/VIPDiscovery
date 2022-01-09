@@ -11,7 +11,7 @@ VIP_FIELDS = list(["address", "port", "loadbalancer", "name", "pool", "pool_mem"
 #   List of Devices to pull data from BIG-IQ / ADM Netscaler
 #########################################################################
 
-F5_DEVICE_TO_QUERY = list(["BRHTL1ASMINT01A.1dc.com"])
+F5_DEVICE_TO_QUERY = list(["ecdbkel02-guest02.network.onefiserv.net"])
 NS_DEVICE_TO_QUERY = list(["All"])
 FILTER_VIP = list(["All"])
 
@@ -48,7 +48,7 @@ F5_STANDALONE = list(["SLBAPP1", "OMA1GIOF5A"])
 #   List of VIPs which need to be disregarded from F5 devices
 #########################################################################
 
-DISREGARD_VIP = list(["0.0.0.0", "1.1.1.1", "2.2.2.2", "3.3.3.3", "4.4.4.4", "5.5.5.5", ":0"])
+DISREGARD_VIP = list(["0.0.0.0", "1.1.1.1", "2.2.2.2", "3.3.3.3", "4.4.4.4", "5.5.5.5", "255.255.255.255", ":0"])
 
 #########################################################################
 #   List of LB instances to disregard from BIG-IQ / ADM Netscaler

@@ -3,6 +3,7 @@
 
 import os
 import json
+import requests
 from helper.local_helper import log
 from helper.lb_helper import DISREGARD_LB_F5, F5_STANDALONE, F5_DEVICE_FIELDS
 from nautobot.nautobot_master import NautobotClient
@@ -90,6 +91,8 @@ def device_ha_state(f5, item):
         try:
             resp = f5.bigiq_api_call("GET", uuid=item["uuid"], path="/rest-proxy/mgmt/tm/sys/failover")
             return json.loads(resp.text)["apiRawValues"]["apiAnonymous"].split()[1]
+        except requests.exceptions.HTTPError:
+            log.error(f"Service Unavailable : {item['hostname']}")
         except Exception as err:
             log.error(f"{item['hostname']}: {err}")
     else:
