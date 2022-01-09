@@ -166,4 +166,4 @@ class F5HelperFun:
             if resp.status_code == 200 and json.loads(resp.text).get("items"):
                 return json.loads(resp.text)["items"]
         except Exception as err:
-            log.error(f"GET API {err}")
+            log.error(f"GET API Server Error {uri}")
