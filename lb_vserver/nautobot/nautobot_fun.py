@@ -261,7 +261,7 @@ class LB_VIP:
 
     def partition(self):
         """Create Partition object in VIP Plugin module."""
-        partition = partitions_attr.get(name=self.vip_data.get("partition"))
+        partition = partitions_attr.get(slug=self.slug_parser(self.vip_data.get("partition")))
         if not partition:
             data = {"name": self.vip_data.get("partition"), "slug": self.slug_parser(self.vip_data.get("partition"))}
             try:
@@ -335,7 +335,7 @@ class LB_VIP:
             cert_data (dict): Cert Info
         """
         log.debug(f"[Cert] Before Parser : {cert_data}")
-        cert = {"serial": cert_data.get("cert_serial", "1234")}
+        cert = {"serial": "1234" if not cert_data.get("cert_serial") else cert_data.get("cert_serial")}
         cert["cn"] = cert_data.get("cert_cn", "").split("/")[0]
         if cert_data.get("cert_issuer"):
             cert["issuer"] = {}
@@ -505,4 +505,4 @@ class LB_VIP:
         Returns:
             str: Object name.
         """
-        return name.replace(" ", "-").replace(".", "_").replace("*", "").replace("/", "_").replace("%", "_").replace("(", "").replace(")", "").lower()
+        return name.replace(" ", "-").replace(".", "_").replace("*", "").replace("/", "_").replace("%", "_").replace("&", "").replace("(", "").replace(")", "").lower()
