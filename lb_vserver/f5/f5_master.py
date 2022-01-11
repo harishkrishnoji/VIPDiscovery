@@ -36,7 +36,7 @@ def f5_master(f5, tags, ENV):
             ha_state = device_ha_state(f5, item)
             if ha_state == "active":
                 item["ha_master_state"] = ha_state
-            elif ha_state == "standby":
+            elif ha_state == "standby" or ha_state == "Standalone":
                 item["ha_master_state"] = ha_state
                 f5f = F5HelperFun(f5, item)
                 if f5f.apidata:
@@ -86,6 +86,7 @@ def device_ha_state(f5, item):
     discard = False
     for i in enumerate(F5_STANDALONE):
         if F5_STANDALONE[i[0]] in item["hostname"]:
+            item["status"] = "Standalone"
             discard = True
     if not discard:
         try:
@@ -96,7 +97,7 @@ def device_ha_state(f5, item):
         except Exception as err:
             log.error(f"{item['hostname']}: {err}")
     else:
-        return discard
+        return "Standalone"
 
 
 def device_stats(f5, f5_info):
