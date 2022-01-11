@@ -185,23 +185,24 @@ class LB_VIP:
         Create partition and environment UUID, before initiating VIP function.
         """
         self.dport = self.vip_data.get("dport", 1)
-        if not self.vip_data.get("pool_mem"):
-            log.error(f"No Pool Members [{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')}")
-        elif all(x in list(self.vip_data) for x in VIP_FIELDS):
-            try:
-                if self.vip_data.get("cert"):
-                    self.certificates()
-                if self.vip_data.get("partition"):
-                    self.partition()
-                if self.vip_data.get("advanced_policies"):
-                    self.policies()
-                self.environment()
-                self.members()
-                self.pool()
-                self.vip_address()
-                self.vip()
-            except Exception as err:
-                log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
+        if all(x in list(self.vip_data) for x in VIP_FIELDS):
+            if not self.vip_data.get("pool_mem"):
+                log.error(f"No Pool Members [{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')}")
+            else:
+                try:
+                    if self.vip_data.get("cert"):
+                        self.certificates()
+                    if self.vip_data.get("partition"):
+                        self.partition()
+                    if self.vip_data.get("advanced_policies"):
+                        self.policies()
+                    self.environment()
+                    self.members()
+                    self.pool()
+                    self.vip_address()
+                    self.vip()
+                except Exception as err:
+                    log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
         else:
             log.warning(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')}")
 
