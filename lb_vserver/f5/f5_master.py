@@ -5,7 +5,7 @@ import os
 import json
 import requests
 from helper.local_helper import log
-from helper.lb_helper import DISREGARD_LB_F5, F5_STANDALONE, F5_DEVICE_FIELDS
+from helper.variables_lb import DISREGARD_LB_F5, F5_STANDALONE, F5_DEVICE_FIELDS
 from nautobot.nautobot_master import NautobotClient
 from f5.f5_fun import F5HelperFun
 

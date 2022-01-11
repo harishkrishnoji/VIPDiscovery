@@ -12,7 +12,7 @@ VIP_FIELDS = list(["address", "port", "loadbalancer", "name", "pool", "pool_mem"
 #########################################################################
 
 F5_DEVICE_TO_QUERY = list(["jxcdpxy02.onefiserv.net"])
-NS_DEVICE_TO_QUERY = list(["All"])
+NS_DEVICE_TO_QUERY = list(["USOMA1SLBSFA01A"])
 FILTER_VIP = list(["All"])
 
 #########################################################################

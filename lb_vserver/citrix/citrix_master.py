@@ -5,7 +5,7 @@ import os
 import json
 from citrix.citrix_fun import pull_vip_info, pull_sgrp_info, pull_cert_info
 from helper.local_helper import log
-from helper.lb_helper import DISREGARD_VIP, NS_DEVICE_FIELDS, DISREGARD_LB_CITRIX
+from helper.variables_lb import DISREGARD_VIP, NS_DEVICE_FIELDS, DISREGARD_LB_CITRIX, FILTER_VIP
 from nautobot.nautobot_master import NautobotClient
 
 
@@ -89,7 +89,11 @@ def gather_vip_info(device, adm, ENV):
     log.debug(f"{device.get('hostname')}: {len(vs_lst)} VIPs...")
     vip_lst = []
     for vs_name in vs_lst:
-        if vs_name.get("name") and vs_name.get("ipv46") not in DISREGARD_VIP:
+        if (
+            vs_name.get("name")
+            and vs_name.get("ipv46") not in DISREGARD_VIP
+            and ("All" in FILTER_VIP or vs_name.get("name") in FILTER_VIP)
+        ):
             vip_info = dict(
                 [
                     ("address", vs_name.get("ipv46")),

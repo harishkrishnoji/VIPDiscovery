@@ -4,9 +4,9 @@
 import os
 import requests
 import pynautobot
-from helper.nautobot_helper import NAUTOBOT_DEVICE_REGION, NAUTOBOT_DEVICE_REGION_OFS
+from helper.variables_nautobot import NAUTOBOT_DEVICE_REGION, NAUTOBOT_DEVICE_REGION_OFS
 from helper.local_helper import log
-from helper.lb_helper import VIP_FIELDS
+from helper.variables_lb import VIP_FIELDS
 from datetime import datetime
 
 requests.urllib3.disable_warnings()
@@ -394,19 +394,44 @@ class LB_VIP:
     ###########################################
 
     def pool(self):
-        """Create Pool Member object in VIP Plugin module."""
-        pools = pools_attr.get(slug=self.slug_parser(self.vip_data.get("pool")))
-        data = {
-            "name": self.vip_data.get("pool"),
-            "slug": self.slug_parser(self.vip_data.get("pool")),
-            "members": self.members_uuid,
-            # "tags": self.tag_uuid
-        }
-        if pools:
-            pool = pools.update(data)
-            if pool:
-                log.debug(f"[Pool] Updated {self.vip_data.get('pool')}")
-        else:
+        """Create Pool Member object in VIP Plugin module.
+
+        Nautobot does not accept duplicate pool name, so create exception function.
+        Function will only create, if existing pool name found, it will create new pool with DUP[no].
+        ex: pool-abc-DUP1, where number will be incremented if there are more than 1 duplicate pool.
+        """
+        log.debug(f"VIP-Info : {self.vip_data} {self.members_uuid}")
+
+        def pool_check(name):
+            """Check if pool and pool member match."""
+            pools = pools_attr.get(slug=self.slug_parser(name))
+            if pools:
+                mem1 = pools.members
+                mem1.sort()
+                mem2 = self.members_uuid
+                mem2.sort()
+                if mem1 == mem2:
+                    log.debug("Found pool and member match")
+                    return pools, True
+                else:
+                    log.debug("Found pool, but no member match")
+                    return pools, False
+            else:
+                log.debug("No pool or member match")
+                return False, False
+        name = self.vip_data.get("pool")
+        n = 0
+        while True:
+            pools, match = pool_check(name)
+            if not pools:
+                break
+            elif pools and match:
+                break
+            else:
+                n = n + 1
+                name = f"{self.vip_data.get('pool')}-DUP{n}"
+        data = {"name": name, "slug": self.slug_parser(name), "members": self.members_uuid}
+        if not pools:
             try:
                 pools = pools_attr.create(data)
             except Exception as err:
@@ -414,6 +439,28 @@ class LB_VIP:
                     f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {self.vip_data.get('pool')} : {err}"
                 )
         self.pool_uuid = pools.id
+
+    # def pool(self):
+    #     """Create Pool Member object in VIP Plugin module."""
+    #     pools = pools_attr.get(slug=self.slug_parser(self.vip_data.get("pool")))
+    #     data = {
+    #         "name": self.vip_data.get("pool"),
+    #         "slug": self.slug_parser(self.vip_data.get("pool")),
+    #         "members": self.members_uuid,
+    #         # "tags": self.tag_uuid
+    #     }
+    #     if pools:
+    #         pool = pools.update(data)
+    #         if pool:
+    #             log.debug(f"[Pool] Updated {self.vip_data.get('pool')}")
+    #     else:
+    #         try:
+    #             pools = pools_attr.create(data)
+    #         except Exception as err:
+    #             log.error(
+    #                 f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {self.vip_data.get('pool')} : {err}"
+    #             )
+    #     self.pool_uuid = pools.id
 
     def members(self):
         """Create Pool Member object in VIP Plugin module."""

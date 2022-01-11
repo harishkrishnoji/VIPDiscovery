@@ -3,7 +3,7 @@
 
 import json
 from helper.local_helper import log
-from helper.lb_helper import DISREGARD_VIP, FILTER_VIP
+from helper.variables_lb import DISREGARD_VIP, FILTER_VIP
 
 
 class F5HelperFun:
