@@ -205,7 +205,7 @@ class LB_VIP:
                 except Exception as err:
                     log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
         else:
-            log.warning(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')}")
+            log.warning(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {list(self.vip_data)}")
 
     def vip(self):
         """Create VIP object in VIP Plugin module."""
@@ -297,7 +297,8 @@ class LB_VIP:
         cert_uuid = []
         for cert in self.vip_data.get("cert"):
             self.cert_parser(cert)
-            certificate = certificates_attr.get(name=self.cert_info.get("cn"))
+            # certificate = certificates_attr.get(name=self.cert_info.get("cn"))
+            certificate = certificates_attr.get(slug=self.slug_parser(self.cert_info.get("cn")))
             self.cert_info
             self.cert_issuer()
             data = {
@@ -310,7 +311,8 @@ class LB_VIP:
             }
             if certificate:
                 try:
-                    certificate.update(data)
+                    if len(data.get("serial_number")) > 8:
+                        certificate.update(data)
                 except Exception as err:
                     log.error(
                         f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {cert.get('cert_cn')} : {err}"
