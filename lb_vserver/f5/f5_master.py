@@ -35,9 +35,9 @@ def f5_master(f5, tags, ENV):
         if not discard and item.get("status") == "Active":
             ha_state = device_ha_state(f5, item)
             if ha_state == "active":
-                item["ha_state"] = ha_state
+                item["ha_master_state"] = ha_state
             elif ha_state == "standby":
-                item["ha_state"] = ha_state
+                item["ha_master_state"] = ha_state
                 f5f = F5HelperFun(f5, item)
                 if f5f.apidata:
                     item["vips"] = f5f.gather_vip_info()
