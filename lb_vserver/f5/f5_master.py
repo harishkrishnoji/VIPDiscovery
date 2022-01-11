@@ -86,7 +86,6 @@ def device_ha_state(f5, item):
     discard = False
     for i in enumerate(F5_STANDALONE):
         if F5_STANDALONE[i[0]] in item["hostname"]:
-            item["status"] = "Standalone"
             discard = True
     if not discard:
         try:
@@ -117,6 +116,7 @@ def device_stats(f5, f5_info):
             svalue = f"https://localhost/mgmt/shared/resolver/device-groups/cm-bigip-allBigIpDevices/devices/{item['uuid']}/stats"
             if "unavailable" in str(jresp["entries"][svalue]["nestedStats"]["entries"]["health.summary"]):
                 item["status"] = "Unreachable"
+                item["ha_master_state"] = "Unreachable"
                 log.error(f"Unreachable Device : {item['hostname']}")
             else:
                 item["status"] = "Active"

@@ -4,6 +4,7 @@
 import os
 import requests
 import pynautobot
+from random import randint
 from helper.variables_nautobot import NAUTOBOT_DEVICE_REGION, NAUTOBOT_DEVICE_REGION_OFS
 from helper.local_helper import log
 from helper.variables_lb import VIP_FIELDS
@@ -336,7 +337,7 @@ class LB_VIP:
             cert_data (dict): Cert Info
         """
         log.debug(f"[Cert] Before Parser : {cert_data}")
-        cert = {"serial": "1234" if not cert_data.get("cert_serial") else cert_data.get("cert_serial")}
+        cert = {"serial": randint(100, 2000) if not cert_data.get("cert_serial") else cert_data.get("cert_serial")}
         cert["cn"] = cert_data.get("cert_cn", "").split("/")[0]
         if cert_data.get("cert_issuer"):
             cert["issuer"] = {}
