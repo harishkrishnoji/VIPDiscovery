@@ -85,7 +85,7 @@ def pull_vip_info(device, adm):
         NS_API_DATA["proxy_value"] = device["ipv4_address"]
         resp = adm.adm_api_call(**NS_API_DATA)
         if resp.status_code == 200:
-            log.info(f"{device['hostname']}")
+            # log.info(f"{device['hostname']}")
             return json.loads(resp.text)
     except Exception as err:
         log.error(f"{device['hostname']}: {err}")
