@@ -11,9 +11,9 @@ VIP_FIELDS = list(["address", "port", "loadbalancer", "name", "pool", "pool_mem"
 #   List of Devices to pull data from BIG-IQ / ADM Netscaler
 #########################################################################
 
-F5_DEVICE_TO_QUERY = list(["jxcdpxy02.onefiserv.net"])
-NS_DEVICE_TO_QUERY = list(["USOMA1SLBSFA01A"])
-FILTER_VIP = list(["All"])
+F5_DEVICE_TO_QUERY = list(["jxpdcpxy01.onefiserv.net"])
+NS_DEVICE_TO_QUERY = list(["INMUM1SLBINT01B"])
+FILTER_VIP = list(["APAC-3DS-FIRSTDATA-COM-PRI-VIP"])
 
 #########################################################################
 #   List of Keys/values which need to be collected from BIG-IQ / ADM Netscaler
@@ -58,24 +58,21 @@ DISREGARD_VIP = list(
 
 DISREGARD_LB_F5 = list(
     [
+        # OFD Devices
         "slbfde",  # FDE Instances
+        "DEFRA1VCDDFA01A-GTM.1dc.com",  # EMEA GTM
+        "DEFRA1VCDDFA01B-GTM.1dc.com",  # EMEA GTM
+        "DEFRA2VCDDFA01A-GTM.1dc.com",  # EMEA GTM
+        "DEFRA2VCDDFA01B-GTM.1dc.com",  # EMEA GTM
+        "USOMA1VCDDFA01A-GTM.1dc.com",  # NA GTM
+        "USOMA1VCDDFA01B-GTM.1dc.com",  # NA GTM
+        "USCHD1VCDDFA01A-GTM.1dc.com",  # NA GTM
+        "USCHD1VCDDFA01B-GTM.1dc.com",  # NA GTM
         "OMA1GIOF5B-v1.giolab.local",
         "SLBAPP2",  # Cluster mode SLBAPP1, SLBAPP2, SLBAPP2
         "SLBAPP3",  # Cluster mode SLBAPP1, SLBAPP2, SLBAPP2
+        "SLBAPP1",  # Cluster mode SLBAPP1, SLBAPP2, SLBAPP2
         "localhost",
-        # "USCHI2SLBEDG01B.1dc.com",
-        # "USDAL3SLBSVC1A.1dc.com",
-        # "ARBNA1ASMINT01A.1dc.com",
-        # "AUSYD1ASMINT01A.1dc.com",
-        # "ARBNA1ASMINT02B.1dc.com",
-        # "DEFRA2ASMINT01A.1dc.com",
-        # "DEFRA1ASMINT01B.1dc.com",
-        # "jcpmidlb01a.onefiserv.net",
-        # "PLPIA1ASMINT01B.1dc.com",
-        # "BRSPA2SLBSFM51B.1dc.com",
-        # "BRSPA2ASMINT01B.1dc.com",
-        # "INBOM1ASMINT01B.1dc.com",
-        # "USOMA1ASMINT01B.1dc.com",
         # OFS Devices
         # "ecdbkel02-guest02",  # ERROR DEVICES
         # "ecdbkel01-guest02",  # ERROR DEVICES

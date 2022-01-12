@@ -205,7 +205,7 @@ class LB_VIP:
                 except Exception as err:
                     log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
         else:
-            log.warning(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {list(self.vip_data)}")
+            log.warning(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('address')} {list(self.vip_data)}")
 
     def vip(self):
         """Create VIP object in VIP Plugin module."""
@@ -311,7 +311,7 @@ class LB_VIP:
             }
             if certificate:
                 try:
-                    if len(data.get("serial_number")) > 8:
+                    if data.get("serial_number") and len(data.get("serial_number")) > 8:
                         certificate.update(data)
                 except Exception as err:
                     log.error(
@@ -324,7 +324,8 @@ class LB_VIP:
                     log.error(
                         f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {cert.get('cert_cn')} : {err}"
                     )
-            cert_uuid.append(certificate.id)
+            if certificate:
+                cert_uuid.append(certificate.id)
         self.certificates_uuid = cert_uuid
 
     def cert_parser(self, cert_data):
@@ -340,7 +341,7 @@ class LB_VIP:
         """
         log.debug(f"[Cert] Before Parser : {cert_data}")
         cert = {"serial": randint(100, 2000) if not cert_data.get("cert_serial") else cert_data.get("cert_serial")}
-        cert["cn"] = cert_data.get("cert_cn", "").split("/")[0]
+        cert["cn"] = cert_data.get("cert_cn", "").split("/")[0].split(",")[0]
         if cert_data.get("cert_issuer"):
             cert["issuer"] = {}
             dc = []
@@ -359,14 +360,19 @@ class LB_VIP:
 
     def cert_issuer(self):
         """Create Certificate Issuer object in VIP Plugin module."""
-        # log.info(self.cert_info["issuer"].get("CN"))
-        issuer = issuer_attr.get(name=self.cert_info["issuer"].get("CN"))
+        if self.cert_info["issuer"].get("CN"):
+            name = self.cert_info["issuer"].get("CN")
+        elif self.cert_info["issuer"].get("O"):
+            name = self.cert_info["issuer"].get("O")
+        else:
+            name = "UNKNOWN"
+        issuer = issuer_attr.get(name=name)
         if not issuer:
             self.cert_organization_uuid = ""
             self.cert_organization()
             data = {
-                "name": self.cert_info["issuer"].get("CN"),
-                "slug": self.slug_parser(self.cert_info["issuer"].get("CN")),
+                "name": name,
+                "slug": self.slug_parser(name),
                 "country": self.cert_info["issuer"].get("C", ""),
                 "location": self.cert_info["issuer"].get("L", ""),
                 "state": self.cert_info["issuer"].get("ST", ""),
