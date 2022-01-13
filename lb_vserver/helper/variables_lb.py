@@ -13,7 +13,7 @@ VIP_FIELDS = list(["address", "port", "loadbalancer", "name", "pool", "pool_mem"
 
 F5_DEVICE_TO_QUERY = list(["jxpdcpxy01.onefiserv.net"])
 NS_DEVICE_TO_QUERY = list(["INMUM1SLBINT01B"])
-FILTER_VIP = list(["APAC-3DS-FIRSTDATA-COM-PRI-VIP"])
+FILTER_VIP = list(["All"])
 
 #########################################################################
 #   List of Keys/values which need to be collected from BIG-IQ / ADM Netscaler
