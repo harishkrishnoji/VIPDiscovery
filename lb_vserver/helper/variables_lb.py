@@ -5,14 +5,14 @@
 #   Mandatory keys/value required to create VIP in Nautobot
 #########################################################################
 
-VIP_FIELDS = list(["address", "port", "loadbalancer", "name", "pool", "pool_mem"])
+VIP_FIELDS = list(["address", "port", "loadbalancer", "name"])
 
 #########################################################################
 #   List of Devices to pull data from BIG-IQ / ADM Netscaler
 #########################################################################
 
 F5_DEVICE_TO_QUERY = list(["jxpdcpxy01.onefiserv.net"])
-NS_DEVICE_TO_QUERY = list(["INMUM1SLBINT01B"])
+NS_DEVICE_TO_QUERY = list(["USCHD1SLBINT01B"])
 FILTER_VIP = list(["All"])
 
 #########################################################################

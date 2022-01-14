@@ -187,25 +187,26 @@ class LB_VIP:
         """
         self.dport = self.vip_data.get("dport", 1)
         if all(x in list(self.vip_data) for x in VIP_FIELDS):
+            if not self.vip_data.get("pool"):
+                self.vip_data["pool"] = "UNKNOWN"
             if not self.vip_data.get("pool_mem"):
-                log.error(f"No Pool Members [{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')}")
-            else:
-                try:
-                    if self.vip_data.get("cert"):
-                        self.certificates()
-                    if self.vip_data.get("partition"):
-                        self.partition()
-                    if self.vip_data.get("advanced_policies"):
-                        self.policies()
-                    self.environment()
-                    self.members()
-                    self.pool()
-                    self.vip_address()
-                    self.vip()
-                except Exception as err:
-                    log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
+                self.vip_data["pool_mem"] = ["1.1.1.1"]
+            try:
+                if self.vip_data.get("cert"):
+                    self.certificates()
+                if self.vip_data.get("partition"):
+                    self.partition()
+                if self.vip_data.get("advanced_policies"):
+                    self.policies()
+                self.environment()
+                self.members()
+                self.pool()
+                self.vip_address()
+                self.vip()
+            except Exception as err:
+                log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
         else:
-            log.warning(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('address')} {list(self.vip_data)}")
+            log.warning(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {list(self.vip_data)}")
 
     def vip(self):
         """Create VIP object in VIP Plugin module."""

@@ -96,6 +96,7 @@ def gather_vip_info(device, adm, ENV):
         ):
             vip_info = dict(
                 [
+                    ("name", vs_name.get("name")),
                     ("address", vs_name.get("ipv46")),
                     ("port", vs_name.get("port")),
                     ("protocol", "UDP" if vs_name.get("servicetype") == "UDP" else "TCP"),
