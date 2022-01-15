@@ -11,13 +11,13 @@ license = "PROPRIETARY"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-citrix-adm = "^0.0.3"
 f5-bigiq = "^0.0.4"
 datetime = "^4.3"
 helper-fts = "^1.0.6"
 colorlog = "^6.6.0"
 pynautobot = "^1.0.4"
 pymongo = "^4.0.1"
+citrix-adm = "^0.0.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.1"

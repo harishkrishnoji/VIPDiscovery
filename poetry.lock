@@ -136,7 +136,7 @@ reference = "nexus"
 
 [[package]]
 name = "citrix-adm"
-version = "0.0.3"
+version = "0.0.4"
 description = "Citrix Application Delivery Management SDK"
 category = "main"
 optional = false
@@ -933,7 +933,7 @@ reference = "nexus"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "5544da79c760d0109a77458250f06f00158722cfc5161bc77c442a8205c5ee26"
+content-hash = "e44ff2625d3650274f01bc4325024d35e1c51e14a367df5aa7dc34c45fdc2f2a"
 
 [metadata.files]
 appdirs = [
@@ -969,8 +969,8 @@ charset-normalizer = [
     {file = "charset_normalizer-2.0.9-py3-none-any.whl", hash = "sha256:1eecaa09422db5be9e29d7fc65664e6c33bd06f9ced7838578ba40d58bdf3721"},
 ]
 citrix-adm = [
-    {file = "citrix-adm-0.0.3.tar.gz", hash = "sha256:a063de7a626d6bc858232ca46d018867a7c99c37a1265af17713075024a5d439"},
-    {file = "citrix_adm-0.0.3-py3-none-any.whl", hash = "sha256:5da89c15d8f099c4b752babe1c7576ba258ea76a9529d3b464c32402b46f7385"},
+    {file = "citrix-adm-0.0.4.tar.gz", hash = "sha256:fe7e086afe8451f9e42062de00911d22747b2b866b22fb8b56e51632e91267e9"},
+    {file = "citrix_adm-0.0.4-py3-none-any.whl", hash = "sha256:4d37dbd2f9018cf78ec1833ca7963aa90d8fd1c04b0d60eec3218fe86eec94f3"},
 ]
 click = [
     {file = "click-8.0.3-py3-none-any.whl", hash = "sha256:353f466495adaeb40b6b5f592f9f91cb22372351c84caeb068132442a4518ef3"},
