@@ -15,7 +15,7 @@ requests.urllib3.disable_warnings()
 # url                     = os.environ.get("RD_OPTION_NAUTOBOT_URL")
 url                     = "https://nautobot.onefiserv.net/"
 token                   = os.environ.get("RD_OPTION_NAUTOBOT_KEY")
-nb                      = pynautobot.api(url, token=token)
+nb                      = pynautobot.api(url, token=token, threading=True)
 nb.http_session.verify  = False
 plugins_attr            = getattr(nb, "plugins")
 extras_attr             = getattr(nb, "extras")
