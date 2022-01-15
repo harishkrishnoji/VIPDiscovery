@@ -6,7 +6,7 @@ import time
 import json
 from citrix.citrix_fun import pull_vip_info, pull_sgrp_info, pull_cert_info
 from helper.local_helper import log, uploadfile, MongoDB
-from helper.variables_lb import DISREGARD_VIP, NS_DEVICE_FIELDS, DISREGARD_LB_CITRIX, FILTER_VIP, NS_DEVICE_TO_QUERY
+from helper.variables_lb import DISREGARD_VIP, NS_DEVICE_FIELDS, DISREGARD_LB_CITRIX, FILTER_VIP
 from nautobot.nautobot_master import NautobotClient
 import concurrent.futures
 
@@ -77,7 +77,7 @@ def ns_device_lst(adm):
         jresp = json.loads(resp.text)
         log.debug(f"Netscaler Device count : {len(jresp.get('ns'))}")
         device_info = []
-        # NS_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+        NS_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
         for device in jresp["ns"]:
             # Filter the devices for which you want to discover VIPs
             if "All" in NS_DEVICE_TO_QUERY or device["hostname"] in NS_DEVICE_TO_QUERY:

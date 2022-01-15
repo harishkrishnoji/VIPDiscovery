@@ -6,7 +6,7 @@ import time
 import json
 import requests
 from helper.local_helper import log, uploadfile, MongoDB
-from helper.variables_lb import DISREGARD_LB_F5, F5_STANDALONE, F5_DEVICE_FIELDS, F5_DEVICE_TO_QUERY
+from helper.variables_lb import DISREGARD_LB_F5, F5_STANDALONE, F5_DEVICE_FIELDS
 from nautobot.nautobot_master import NautobotClient
 from f5.f5_fun import F5HelperFun
 import concurrent.futures
@@ -77,7 +77,7 @@ def device_list(f5):
         jresp = json.loads(resp.text)
         log.debug(f"F5 Device count : {len(jresp.get('items'))}")
         device_info = []
-        # F5_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+        F5_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
         for device in jresp["items"]:
             # For Test or Troubleshooting purpose
             # Filter the devices for which you want to discover VIPs
