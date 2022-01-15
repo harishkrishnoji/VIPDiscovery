@@ -2,11 +2,18 @@
 """Citrix Master."""
 
 import os
+import time
 import json
 from citrix.citrix_fun import pull_vip_info, pull_sgrp_info, pull_cert_info
-from helper.local_helper import log
-from helper.variables_lb import DISREGARD_VIP, NS_DEVICE_FIELDS, DISREGARD_LB_CITRIX, FILTER_VIP
+from helper.local_helper import log, uploadfile, MongoDB
+from helper.variables_lb import DISREGARD_VIP, NS_DEVICE_FIELDS, DISREGARD_LB_CITRIX, FILTER_VIP, NS_DEVICE_TO_QUERY
 from nautobot.nautobot_master import NautobotClient
+import concurrent.futures
+
+dbp = os.environ.get("RD_OPTION_DB_PWD")
+dbu = os.environ.get("RD_OPTION_DB_USER")
+dbh = os.environ.get("RD_OPTION_DB_HOST")
+db = MongoDB(dbu, dbp, dbh)
 
 
 def citrix_master(adm, tags, ENV):
@@ -19,34 +26,41 @@ def citrix_master(adm, tags, ENV):
     """
     log.debug("Master Citrix Initiated.. ")
     log.debug(f"Gather Device list for {ENV}..")
-    ns_info = ns_device_lst(adm)
-    for device in ns_info:
-        # Filter to look for Standby, non OFS, and Standalone
-        device["mgmt_address"] = device.pop("mgmt_ip_address")
-        device["tags"] = tags
-        if "OFS_Netscaler" in ENV:
-            var = device["ha_ip_address"].startswith("11.")
-            if var:
-                device["ipv4_address"] = device["ipv4_address"].replace("10", "11", 1)
-                device["environment"] = ENV
-        elif "OFD_Netscaler" in ENV:
-            var = device["ha_ip_address"].startswith("10.") or device["ha_ip_address"].startswith("167.")
-            if var:
-                device["environment"] = ENV
-
-        if device.get("environment") == ENV:
-            if (device["hostname"] not in DISREGARD_LB_CITRIX) and (
-                (
-                    device["ha_master_state"] == "Secondary"
-                    and device["instance_state"] == "Up"
-                    and device["ipv4_address"] != ""
-                )
-                or ("DEFRA1SLBSFA02A" in device["hostname"] and device["instance_state"] == "Up")
-            ):
-                # if device.get("hostname") == "AUSYD2SLBSFM01A-D2NR":
-                gather_vip_info(device, adm, ENV)
-            else:
-                NautobotClient(device)
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        ns_info = ns_device_lst(adm)
+        sas_vip_info = []
+        filename = f"RUNDECK_{ENV}-{time.strftime('%m%d%Y-%H%M')}.json"
+        for device in ns_info:
+            # Filter to look for Standby, non OFS, and Standalone
+            device["mgmt_address"] = device.pop("mgmt_ip_address")
+            device["tags"] = tags
+            if "OFS_Netscaler" in ENV:
+                var = device["ha_ip_address"].startswith("11.")
+                if var:
+                    device["ipv4_address"] = device["ipv4_address"].replace("10", "11", 1)
+                    device["environment"] = ENV
+            elif "OFD_Netscaler" in ENV:
+                var = device["ha_ip_address"].startswith("10.") or device["ha_ip_address"].startswith("167.")
+                if var:
+                    device["environment"] = ENV
+            if device.get("environment") == ENV:
+                if (device["hostname"] not in DISREGARD_LB_CITRIX) and (
+                    (
+                        device["ha_master_state"] == "Secondary"
+                        and device["instance_state"] == "Up"
+                        and device["ipv4_address"] != ""
+                    )
+                    or ("DEFRA1SLBSFA02A" in device["hostname"] and device["instance_state"] == "Up")
+                ):
+                    device["vips"] = gather_vip_info(device, adm, ENV)
+                    sas_vip_info.extend(device["vips"])
+                    executor.submit(db.vip_collection, device["vips"])
+                executor.submit(NautobotClient, device)
+        with open(filename, "w+") as json_file:
+            json.dump(sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
+        resp = uploadfile(filename)
+        log.info(resp.strip())
+    log.info("Job done")
 
 
 def ns_device_lst(adm):
@@ -63,9 +77,8 @@ def ns_device_lst(adm):
         jresp = json.loads(resp.text)
         log.debug(f"Netscaler Device count : {len(jresp.get('ns'))}")
         device_info = []
-        NS_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+        # NS_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
         for device in jresp["ns"]:
-            # For Test or Troubleshooting purpose
             # Filter the devices for which you want to discover VIPs
             if "All" in NS_DEVICE_TO_QUERY or device["hostname"] in NS_DEVICE_TO_QUERY:
                 log.debug(f"{device['hostname']}")
@@ -84,11 +97,12 @@ def gather_vip_info(device, adm, ENV):
         adm (object): ADM Instance.
         ENV (str): Enviroment OFD, OFS.
     """
-    log.debug(f"{device.get('hostname')}: Gathering VIP Info..")
     vs_lst = pull_vip_info(device, adm).get("lbvserver", [])
     log.debug(f"{device.get('hostname')}: {len(vs_lst)} VIPs...")
     vip_lst = []
-    for vs_name in vs_lst:
+
+    def concurrent_vip(vs_name):
+        """Get concurrent vips and return future object."""
         if (
             vs_name.get("name")
             and vs_name.get("ipv46") not in DISREGARD_VIP
@@ -105,11 +119,18 @@ def gather_vip_info(device, adm, ENV):
                     ("environment", ENV),
                 ]
             )
-            if (pool_to_nautobot := pull_sgrp_info(vs_name, adm)) is not None:
+            pool_to_nautobot = pull_sgrp_info(vs_name, adm)
+            if pool_to_nautobot:
                 vip_info.update(pool_to_nautobot)
             if vs_name.get("servicetype") == "SSL" or vs_name.get("servicetype") == "SSL_TCP":
-                if (cert_to_nautobot := pull_cert_info(vs_name, adm)) is not None:
+                cert_to_nautobot = pull_cert_info(vs_name, adm)
+                if cert_to_nautobot:
                     vip_info["cert"] = cert_to_nautobot
-            vip_lst.append(vip_info)
-    device["vips"] = vip_lst
-    NautobotClient(device)
+            return vip_info
+
+    with concurrent.futures.ThreadPoolExecutor() as vip_executor:
+        results = [vip_executor.submit(concurrent_vip, vs_name) for vs_name in vs_lst]
+    for f in concurrent.futures.as_completed(results):
+        if f.result():
+            vip_lst.append(f.result())
+    return vip_lst

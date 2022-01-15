@@ -17,6 +17,7 @@ datetime = "^4.3"
 helper-fts = "^1.0.6"
 colorlog = "^6.6.0"
 pynautobot = "^1.0.4"
+pymongo = "^4.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.4.1"

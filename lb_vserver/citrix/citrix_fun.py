@@ -24,7 +24,7 @@ def pull_sgrp_info(vs_name, adm):
             jresp = json.loads(resp.text)
             servicegrp = jresp["lbvserver_servicegroupmember_binding"][0]["servicegroupname"]
             pool_mem = list(sgrp["ipv46"] for sgrp in jresp["lbvserver_servicegroupmember_binding"])
-            return dict([("name", vs_name["name"]), ("pool", servicegrp), ("pool_mem", pool_mem)])
+            return dict([("pool", servicegrp), ("pool_mem", pool_mem)])
     except Exception as err:
         log.error(f"{vs_name.get('name')}: {err}")
 
