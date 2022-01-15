@@ -150,7 +150,7 @@ class F5HelperFun:
                                 vip_info["dport"] = self.dport
                             vip_lst.append(vip_info)
                 except Exception as e:
-                    self.log.error(f"[{vip.get('name')}]: {e}")
+                    self.log.error(f"[{self.item.get('hostname')}] {vip.get('name')} : {e}")
         return vip_lst
 
     def get_api_call(self, uri):
@@ -163,9 +163,9 @@ class F5HelperFun:
             dict: data.
         """
         try:
-            log.debug(f"GET API {self.item.get('uuid')}:{uri}")
+            log.debug(f"[{self.item.get('hostname')}] GET API {self.item.get('uuid')}:{uri}")
             resp = self.f5.bigiq_api_call("GET", self.item.get("uuid"), uri)
             if resp.status_code == 200 and json.loads(resp.text).get("items"):
                 return json.loads(resp.text)["items"]
         except Exception:
-            log.error(f"GET API Server Error {uri}")
+            log.error(f"[{self.item.get('hostname')}] GET API Server Error {uri}")
