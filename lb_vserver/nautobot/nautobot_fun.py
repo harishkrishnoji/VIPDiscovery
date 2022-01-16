@@ -194,19 +194,38 @@ class LB_VIP:
             try:
                 if self.vip_data.get("cert"):
                     self.certificates()
-                if self.vip_data.get("partition"):
-                    self.partition()
-                if self.vip_data.get("advanced_policies"):
-                    self.policies()
-                self.environment()
                 self.members()
                 self.pool()
                 self.vip_address()
-                self.vip()
+                if self.check_pool():
+                    log.info("Creating / Updating VIP..")
+                    if self.vip_data.get("partition"):
+                        self.partition()
+                    if self.vip_data.get("advanced_policies"):
+                        self.policies()
+                    self.environment()
+                    self.vip()
             except Exception as err:
                 log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
         else:
             log.warning(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {list(self.vip_data)}")
+
+    def check_pool(self):
+        """Check if pool and cert exist and match."""
+        vips = vip_attr.filter(name=self.vip_data.get("name"))
+        for vip in vips:
+            if (
+                (vip.address == self.vip_addr_uuid)
+                and (str(vip.port) == str(self.vip_data.get("port")))
+                and (vip.protocol == self.vip_data.get("protocol"))
+            ):
+                if vip.pool == self.pool_uuid:
+                    if self.vip_data.get("cert"):
+                        if vip.certificates.sort() == self.certificates_uuid.sort():
+                            return False
+                    else:
+                        return False
+        return True
 
     def vip(self):
         """Create VIP object in VIP Plugin module."""
