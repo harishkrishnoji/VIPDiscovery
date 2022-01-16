@@ -198,7 +198,6 @@ class LB_VIP:
                 self.pool()
                 self.vip_address()
                 if self.check_pool():
-                    log.info("Creating / Updating VIP..")
                     if self.vip_data.get("partition"):
                         self.partition()
                     if self.vip_data.get("advanced_policies"):
