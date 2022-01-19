@@ -128,9 +128,10 @@ def gather_vip_info(device, adm, ENV):
                     vip_info["cert"] = cert_to_nautobot
             return vip_info
 
-    with concurrent.futures.ThreadPoolExecutor() as vip_executor:
-        results = [vip_executor.submit(concurrent_vip, vs_name) for vs_name in vs_lst]
-    for f in concurrent.futures.as_completed(results):
-        if f.result():
-            vip_lst.append(f.result())
+    # with concurrent.futures.ThreadPoolExecutor() as vip_executor:
+    #     results = [vip_executor.submit(concurrent_vip, vs_name) for vs_name in vs_lst]
+    # for f in concurrent.futures.as_completed(results):
+    #     if f.result():
+    #         vip_lst.append(f.result())
+    vip_lst = [concurrent_vip(vs_name) for vs_name in vs_lst]
     return vip_lst
