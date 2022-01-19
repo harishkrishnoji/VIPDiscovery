@@ -13,7 +13,9 @@ def NautobotClient(lb_data):
     """
     device_data = lb_data.copy()
     device_data.pop("vips", "")
-    log.info(f"Updating {lb_data.get('hostname')} [{lb_data.get('ha_master_state', 'Unknown')}] : [VIPs] {len(lb_data.get('vips', []))}")
+    state_list = ["active", "Primary"]
+    if lb_data.get('ha_master_state') not in state_list:
+        log.info(f"Updating {lb_data.get('hostname')} [{lb_data.get('ha_master_state', 'Unknown')}] : [VIPs] {len(lb_data.get('vips', []))}")
     device = LB_DEVICE(device_data)
     device.device()
     loadbalancer_uuid = device.loadbalancer_uuid
