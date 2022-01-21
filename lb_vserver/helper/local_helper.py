@@ -51,6 +51,16 @@ class MongoDB:
         else:
             self.db.insert_one(data)
 
+    def host_collection(self, lb_data):
+        """Get Device collection from MongoDB.
+
+        Args:
+            lb_data (dict): LB Device related info.
+        """
+        self.db = self.client.fdc_inventory.sane_devices
+        query = {"mgmt_address": lb_data.get("mgmt_address"), "hostname": lb_data.get("hostname")}
+        self.update_document(query, lb_data)
+
     def vip_collection(self, vips):
         """Get VIP collection from MongoDB.
 

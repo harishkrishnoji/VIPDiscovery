@@ -55,6 +55,7 @@ def f5_master(f5, tags, ENV):
                         executor.submit(db.vip_collection, item["vips"])
                     else:
                         log.error(f"{item['hostname']}: Gathering Pool and Cert info")
+            executor.submit(db.host_collection, item)
             executor.submit(NautobotClient, item)
         with open(filename, "w+") as json_file:
             json.dump(sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
