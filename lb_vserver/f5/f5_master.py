@@ -51,7 +51,8 @@ def f5_master(f5, tags, ENV):
                     f5f = F5HelperFun(f5, item)
                     if f5f.apidata:
                         item["vips"] = f5f.gather_vip_info()
-                        sas_vip_info.extend(item["vips"])
+                        if item["vips"]:
+                            sas_vip_info.extend(item["vips"])
                         executor.submit(db.vip_collection, item["vips"])
                     else:
                         log.error(f"{item['hostname']}: Gathering Pool and Cert info")
@@ -85,7 +86,7 @@ def device_list(f5):
             if "All" in F5_DEVICE_TO_QUERY or device["hostname"] in F5_DEVICE_TO_QUERY:
                 log.debug(f"{device['hostname']}")
                 # Filter only the Fields/Keys which match F5_DEVICE_FIELDS
-                device_info.append(dict((i, device[i]) for i in F5_DEVICE_FIELDS))
+                device_info.append(dict((i, device.get(i)) for i in F5_DEVICE_FIELDS))
         return device_stats(f5, device_info)
     except Exception as err:
         log.error(f"{err}")

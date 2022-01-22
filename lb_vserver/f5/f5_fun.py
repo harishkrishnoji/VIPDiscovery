@@ -126,7 +126,7 @@ class F5HelperFun:
                                     ("advanced_policies", vip.get("rules", [])),
                                     ("port", "1" if port == "0" else port),
                                     ("loadbalancer", self.item.get("hostname")),
-                                    ("loadbalancer_address", self.item.get("address")),
+                                    ("loadbalancer_address", self.item.get("mgmt_address","")),
                                     ("protocol", "UDP" if vip.get("ipProtocol") == "udp" else "TCP"),
                                     ("environment", self.item.get("environment")),
                                     ("tags", self.item.get("tags")),

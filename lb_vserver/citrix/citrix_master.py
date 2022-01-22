@@ -53,7 +53,8 @@ def citrix_master(adm, tags, ENV):
                     or ("DEFRA1SLBSFA02A" in device["hostname"] and device["instance_state"] == "Up")
                 ):
                     device["vips"] = gather_vip_info(device, adm, ENV)
-                    sas_vip_info.extend(device["vips"])
+                    if device["vips"]:
+                        sas_vip_info.extend(device["vips"])
                     executor.submit(db.vip_collection, device["vips"])
                 executor.submit(db.host_collection, device)
                 executor.submit(NautobotClient, device)
@@ -101,9 +102,7 @@ def gather_vip_info(device, adm, ENV):
     vs_lst = pull_vip_info(device, adm).get("lbvserver", [])
     log.debug(f"{device.get('hostname')}: {len(vs_lst)} VIPs...")
     vip_lst = []
-
-    def concurrent_vip(vs_name):
-        """Get concurrent vips and return future object."""
+    for vs_name in vs_lst:
         if (
             vs_name.get("name")
             and vs_name.get("ipv46") not in DISREGARD_VIP
@@ -127,12 +126,5 @@ def gather_vip_info(device, adm, ENV):
                 cert_to_nautobot = pull_cert_info(vs_name, adm)
                 if cert_to_nautobot:
                     vip_info["cert"] = cert_to_nautobot
-            return vip_info
-
-    # with concurrent.futures.ThreadPoolExecutor() as vip_executor:
-    #     results = [vip_executor.submit(concurrent_vip, vs_name) for vs_name in vs_lst]
-    # for f in concurrent.futures.as_completed(results):
-    #     if f.result():
-    #         vip_lst.append(f.result())
-    vip_lst = [concurrent_vip(vs_name) for vs_name in vs_lst]
+            vip_lst.append(vip_info)
     return vip_lst
