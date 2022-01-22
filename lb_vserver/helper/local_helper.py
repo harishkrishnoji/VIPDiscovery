@@ -42,6 +42,7 @@ class MongoDB:
         Args:
             query (str): DB query string.
             data (dict): data to run diff function.
+            db (object): MongoDB Object.
         """
         document = db.find_one(query)
         if document:
