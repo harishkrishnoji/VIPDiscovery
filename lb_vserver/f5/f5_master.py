@@ -49,13 +49,10 @@ def f5_master(f5, tags, ENV):
                 elif ha_state == "standby" or ha_state == "Standalone":
                     item["ha_master_state"] = ha_state
                     f5f = F5HelperFun(f5, item)
-                    if f5f.apidata:
-                        item["vips"] = f5f.gather_vip_info()
-                        if item["vips"]:
-                            sas_vip_info.extend(item["vips"])
-                        executor.submit(db.vip_collection, item["vips"])
-                    else:
-                        log.error(f"{item['hostname']}: Gathering Pool and Cert info")
+                    item["vips"] = f5f.gather_vip_info()
+                    if item["vips"]:
+                        sas_vip_info.extend(item["vips"])
+                    executor.submit(db.vip_collection, item["vips"])
             executor.submit(db.host_collection, item)
             executor.submit(NautobotClient, item)
         with open(filename, "w+") as json_file:

@@ -18,12 +18,13 @@ class F5HelperFun:
         """
         self.log = log
         self.f5 = f5
-        self.apidata = True
         self.item = item
         self.dport = 10
         self.log.debug("Gathering Pool member info...")
+        self.pool_lst = dict()
         self.pool_info()
         self.log.debug("Gathering Cert File info...")
+        self.ssl_profile = dict()
         self.cert_file_info()
         self.log.debug("Gathering SSL Profile info...")
         self.ssl_profile_info()
@@ -33,7 +34,6 @@ class F5HelperFun:
         uri = "/rest-proxy/mgmt/tm/ltm/pool/?expandSubcollections=true"
         resp = self.get_api_call(uri)
         if resp:
-            self.pool_lst = {}
             for pool in resp:
                 if pool["membersReference"].get("items"):
                     pool_m_lst = [
@@ -51,8 +51,6 @@ class F5HelperFun:
                         for pool_mem in pool["membersReference"].get("items")
                     ]
                     self.pool_lst.update({pool["name"]: pool_m_lst})
-        else:
-            self.apidata = False
 
     def ssl_profile_info(self):
         """Get all ssl profile info for specific device UUID."""
@@ -62,8 +60,6 @@ class F5HelperFun:
             self.ssl_profile = {
                 ssl_profile.get("name"): self.cert_file[ssl_profile.get("cert").split("/")[2]] for ssl_profile in resp
             }
-        else:
-            self.apidata = False
 
     def cert_file_info(self):
         """Get all cert file info for specific device UUID."""
@@ -86,8 +82,6 @@ class F5HelperFun:
                 )
                 for cert in resp
             }
-        else:
-            self.apidata = False
 
     def gather_vip_info(self):
         """Get all VIP info for specific device UUID.
