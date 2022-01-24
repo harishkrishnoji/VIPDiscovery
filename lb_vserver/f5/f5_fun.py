@@ -90,9 +90,11 @@ class F5HelperFun:
             dict: VIP info.
         """
         log.debug("Gathering VIP Info..")
-        # uri = "/rest-proxy/mgmt/tm/ltm/virtual?expandSubcollections=true"
-        uri = "/rest-proxy/mgmt/tm/ltm/virtual"
+        uri = "/rest-proxy/mgmt/tm/ltm/virtual?expandSubcollections=true"
         resp = self.get_api_call(uri)
+        if not resp:
+            uri = "/rest-proxy/mgmt/tm/ltm/virtual"
+            resp = self.get_api_call(uri)
         vip_lst = []
         if resp:
             self.log.debug(f"[{len(resp)}] VIPs...")
