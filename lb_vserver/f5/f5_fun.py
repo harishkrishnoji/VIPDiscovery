@@ -139,6 +139,10 @@ class F5HelperFun:
                                     vip_info["advanced_policies"].append(i["name"])
                                     if "clientside" in i["context"] and self.ssl_profile.get(i["name"]):
                                         vip_info["cert"].append(self.ssl_profile.get(i["name"]))
+                            if not vip_info.get["advanced_policies"]:
+                                vip_info.pop("advanced_policies")
+                            if not vip_info.get["cert"]:
+                                vip_info.pop("cert")
                             # Nautobot does not accepting pool member without address and if pool member is FQDN
                             # we add default IP as 1.1.1.1, if there are more than one FQDN, we append dport (destination port)
                             # dport cannot be the same, so it is randomly incremented
