@@ -12,8 +12,7 @@ from datetime import datetime
 
 requests.urllib3.disable_warnings()
 
-# url                     = os.environ.get("RD_OPTION_NAUTOBOT_URL")
-url                     = "https://nautobot.onefiserv.net/"
+url                     = os.environ.get("RD_OPTION_NAUTOBOT_URL")
 token                   = os.environ.get("RD_OPTION_NAUTOBOT_KEY")
 nb                      = pynautobot.api(url, token=token, threading=True)
 nb.http_session.verify  = False
@@ -24,12 +23,14 @@ ipam_attr               = getattr(nb, "ipam")
 vip_tracker_attr        = getattr(plugins_attr, "vip-tracker")
 tags_attr               = getattr(extras_attr, "tags")
 ip_addresses_attr       = getattr(ipam_attr, "ip-addresses")
+interfaces_attr         = getattr(dcim_attr, "interfaces")
 sites_attr              = getattr(dcim_attr, "sites")
 devices_attr            = getattr(dcim_attr, "devices")
 device_types_attr       = getattr(dcim_attr, "device-types")
 device_roles_attr       = getattr(dcim_attr, "device-roles")
 manufacturers_attr      = getattr(dcim_attr, "manufacturers")
 regions_attr            = getattr(dcim_attr, "regions")
+platforms_attr          = getattr(dcim_attr, "platforms")
 vip_attr                = getattr(vip_tracker_attr, "vip")
 vip_detail_attr         = getattr(vip_tracker_attr, "vip-detail")
 certificates_attr       = getattr(vip_tracker_attr, "certificates")
@@ -61,16 +62,42 @@ class LB_DEVICE:
             self.device_role()
             self.device_type()
             self.site()
+            self.device_platforms()
             data = {
                 "name": self.device_data.get("hostname"),
                 "device_type": self.device_type_uuid,
                 "device_role": self.device_role_uuid,
+                "platform": self.platform_uuid,
                 "site": self.site_uuid,
                 "status": "active",
                 "tags": self.tag_uuid,
             }
             device = devices_attr.create(data)
         self.loadbalancer_uuid = device.id
+        self.device_interface()
+
+    def device_interface(self):
+        """Create Device Interface object in core Organization module."""
+        interface = interfaces_attr.filter(device=self.device_data.get("hostname"))
+        if interface:
+            self.interface_uuid = interface[0].id
+        else:
+            data = {
+                "device": self.loadbalancer_uuid,
+                "name": "Management",
+                "type": "virtual",
+                "enabled": True,
+                "description": f"{self.device_data.get('hostname')} Management Interface"
+            }
+            interface = interfaces_attr.create(data)
+            self.interface_uuid = interface[0].id
+        self.device_interface_address()
+
+    def device_interface_address(self):
+        self.mgmt_address_uuid = self.ipam_address(self.device_data.get("mgmt_address"))
+        data = {"primary_ip4": self.mgmt_address_uuid}
+        device = devices_attr.get(name=self.device_data.get("hostname"))
+        device.update(data)
 
     def device_role(self):
         """Create Device Role object in core Organization module."""
@@ -79,6 +106,15 @@ class LB_DEVICE:
             data = {"name": "load_balancer", "slug": "load-balancer", "description": "F5 and Citrix LB role"}
             device_role = device_roles_attr.create(data)
         self.device_role_uuid = device_role.id
+
+    def device_platforms(self):
+        """Create Device Platform object in core Organization module."""
+        name = "bigip" if "F5" in self.device_data.get("environment") else "netscaler"
+        platform = platforms_attr.get(name=name)
+        if not platform:
+            data = {"name": name, "slug": name, "manufacturer": self.manufacturer_uuid}
+            platform = platforms_attr.create(data)
+        self.platform_uuid = platform.id
 
     def device_type(self):
         """Create Device Type object in core Organization module."""
@@ -144,6 +180,42 @@ class LB_DEVICE:
             data = {"name": self.site_info.get("region"), "slug": self.slug_parser(self.site_info.get("region"))}
             region = regions_attr.create(data)
         self.region_uuid = region.id
+
+    def ipam_address(self, address):
+        """Create Interface Address object in core IPAM module.
+
+        Args:
+            address (str): IP Address.
+
+        Returns:
+            str: IP Address UUID.
+        """
+        ipam_addr = ip_addresses_attr.filter(address=address)
+        ipam_address = False
+        for addr in ipam_addr:
+            tag1 = self.device_data.get("tags")
+            tag2 = [i.slug for i in addr.tags]
+            tag2.sort()
+            tag1.sort()
+            if address == addr.address.split("/")[0] and tag1 == tag2:
+                ipam_address = addr
+        data = dict(
+            [
+                ("address", address),
+                ("status", "active"),
+                ("tags", self.tag_uuid),
+                ("assigned_object_type", "dcim.interface"),
+                ("assigned_object_id", self.interface_uuid)
+            ]
+        )
+        try:
+            if not ipam_address:
+                ipam_address = ip_addresses_attr.create(data)
+            elif ipam_address.assigned_object_id != self.interface_uuid:
+                ipam_address.update(data)
+        except Exception as err:
+            log.error(f"[{self.device_data.get('hostname')}] {address} : {err}")
+        return ipam_address.id
 
     def slug_parser(self, name):
         """Slug name parser.
