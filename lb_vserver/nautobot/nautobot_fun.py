@@ -94,6 +94,7 @@ class LB_DEVICE:
         self.device_interface_address()
 
     def device_interface_address(self):
+        """Create Interface Address object in core Organization module."""
         self.mgmt_address_uuid = self.ipam_address(self.device_data.get("mgmt_address"))
         data = {"primary_ip4": self.mgmt_address_uuid}
         device = devices_attr.get(name=self.device_data.get("hostname"))

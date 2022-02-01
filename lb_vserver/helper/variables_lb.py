@@ -19,9 +19,7 @@ FILTER_VIP = list(["All"])
 #   List of Keys/values which need to be collected from BIG-IQ / ADM Netscaler
 #########################################################################
 
-F5_DEVICE_FIELDS = list(
-    ["uuid", "address", "product", "version", "hostname", "platformMarketingName"]
-)
+F5_DEVICE_FIELDS = list(["uuid", "address", "product", "version", "hostname", "platformMarketingName"])
 NS_DEVICE_FIELDS = list(
     [
         "ha_ip_address",
