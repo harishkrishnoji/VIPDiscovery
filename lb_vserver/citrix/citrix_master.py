@@ -32,7 +32,7 @@ def citrix_master(adm, tags, ENV):
         filename = f"RUNDECK_{ENV}-{time.strftime('%m%d%Y-%H%M')}.json"
         for device in ns_info:
             # Filter to look for Standby, non OFS, and Standalone
-            device["mgmt_address"] = device.pop("mgmt_ip_address")
+            device["mgmt_address"] = device["ipv4_address"]
             device["tags"] = tags
             if "OFS_Netscaler" in ENV:
                 var = device["ha_ip_address"].startswith("11.")
@@ -55,8 +55,8 @@ def citrix_master(adm, tags, ENV):
                     device["vips"] = gather_vip_info(device, adm, ENV)
                     if device["vips"]:
                         sas_vip_info.extend(device["vips"])
-                    executor.submit(db.vip_collection, device["vips"])
-                executor.submit(db.host_collection, device)
+                    db.vip_collection(device["vips"])
+                db.host_collection(device)
                 executor.submit(NautobotClient, device)
         with open(filename, "w+") as json_file:
             json.dump(sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)

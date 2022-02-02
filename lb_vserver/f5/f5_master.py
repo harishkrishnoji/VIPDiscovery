@@ -52,8 +52,8 @@ def f5_master(f5, tags, ENV):
                     item["vips"] = f5f.gather_vip_info()
                     if item["vips"]:
                         sas_vip_info.extend(item["vips"])
-                    executor.submit(db.vip_collection, item["vips"])
-            executor.submit(db.host_collection, item)
+                    db.vip_collection(item["vips"])
+            db.host_collection(item)
             executor.submit(NautobotClient, item)
         with open(filename, "w+") as json_file:
             json.dump(sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)

@@ -73,8 +73,9 @@ class LB_DEVICE:
                 "tags": self.tag_uuid,
             }
             device = devices_attr.create(data)
+            self.loadbalancer_uuid = device.id
+            self.device_interface()
         self.loadbalancer_uuid = device.id
-        self.device_interface()
 
     def device_interface(self):
         """Create Device Interface object in core Organization module."""
@@ -96,7 +97,7 @@ class LB_DEVICE:
     def device_interface_address(self):
         """Create Interface Address object in core Organization module."""
         self.mgmt_address_uuid = self.ipam_address(self.device_data.get("mgmt_address"))
-        data = {"primary_ip4": self.mgmt_address_uuid}
+        data = {"primary_ip4": self.mgmt_address_uuid, "tags": self.tag_uuid}
         device = devices_attr.get(name=self.device_data.get("hostname"))
         device.update(data)
 

@@ -12,7 +12,7 @@ VIP_FIELDS = list(["address", "port", "loadbalancer", "name"])
 #########################################################################
 
 F5_DEVICE_TO_QUERY = list(["All"])
-NS_DEVICE_TO_QUERY = list(["USCHD1SLBINT04B"])
+NS_DEVICE_TO_QUERY = list(["All"])
 FILTER_VIP = list(["All"])
 
 #########################################################################
