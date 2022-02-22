@@ -2,6 +2,7 @@
 """Nautobot REST API SDK."""
 
 import os
+import json
 import requests
 import pynautobot
 from random import randint
@@ -91,7 +92,7 @@ class LB_DEVICE:
                 "description": f"{self.device_data.get('hostname')} Management Interface"
             }
             interface = interfaces_attr.create(data)
-            self.interface_uuid = interface[0].id
+            self.interface_uuid = interface.id
         self.device_interface_address()
 
     def device_interface_address(self):
@@ -114,6 +115,7 @@ class LB_DEVICE:
         name = "bigip" if "F5" in self.device_data.get("environment") else "netscaler"
         platform = platforms_attr.get(name=name)
         if not platform:
+            self.manufacturers()
             data = {"name": name, "slug": name, "manufacturer": self.manufacturer_uuid}
             platform = platforms_attr.create(data)
         self.platform_uuid = platform.id
@@ -134,10 +136,11 @@ class LB_DEVICE:
     def manufacturers(self):
         """Create manufacturer object in core Organization module."""
         manufacturer_name = "F5" if "F5" in self.device_data.get("environment") else "Citrix"
-        manufacturer = manufacturers_attr.get(name=manufacturer_name)
+        manufacturer = manufacturers_attr.get(slug=self.slug_parser(manufacturer_name))
         if not manufacturer:
             data = {"name": manufacturer_name.upper(), "slug": self.slug_parser(manufacturer_name)}
             manufacturer = manufacturers_attr.create(data)
+        log.info(manufacturer)
         self.manufacturer_uuid = manufacturer.id
 
     def tags(self):
@@ -232,6 +235,52 @@ class LB_DEVICE:
         """
         return name.replace(" ", "-").replace(".", "_").replace("*", "").replace("/", "_").lower()
 
+class LB_VIP_DELETE:
+    
+    def vip_delete(self):
+        for vip in vip_attr.all():
+            vip.delete()
+        self.pool_delete()
+        self.members_delete()
+        self.policies_delete()
+        self.partitions_delete()
+        self.environments_delete()
+        self.certificates_delete()
+        self.issuer_delete()
+        self.organization_delete()
+
+    def pool_delete(self):
+        for pool in pools_attr.all():
+            pool.delete()
+    
+    def members_delete(self):
+        for member in members_attr.all():
+            member.delete()
+    
+    def policies_delete(self):
+        for policy in policies_attr.all():
+            policy.delete()
+    
+    def partitions_delete(self):
+        for partition in partitions_attr.all():
+            partition.delete()
+    
+    def certificates_delete(self):
+        for certificate in certificates_attr.all():
+            certificate.delete()
+
+    def environments_delete(self):
+        for environment in environments_attr.all():
+            environment.delete()
+
+    def issuer_delete(self):
+        for issuer in issuer_attr.all():
+            issuer.delete()
+
+    def organization_delete(self):
+        for organization in organization_attr.all():
+            organization.delete()
+
 
 class LB_VIP:
     """Create a Nautobot LB VIP Function client."""
@@ -252,6 +301,19 @@ class LB_VIP:
         self.partition_uuid     = ""
         self.certificates_uuid  = []
         self.vip_addr_uuid      = ""
+        self.create_vip         = True
+        self.vip_query          = """
+        query ($vip: String!) { 
+            vips (name: $vip) { 
+                address { address }
+                port
+                protocol
+                pool { members { address { address } } }
+                certificates { serial_number }
+            }
+        }
+        """
+
 
     def main_fun(self):
         """Main function, initiated from nautobot_master.
@@ -259,50 +321,65 @@ class LB_VIP:
         Validate if input vip info has all fields required to create Nautobot entry.
         Create partition and environment UUID, before initiating VIP function.
         """
-        self.dport = self.vip_data.get("dport", 1)
         if all(x in list(self.vip_data) for x in VIP_FIELDS):
-            if not self.vip_data.get("pool"):
-                self.vip_data["pool"] = "UNKNOWN"
-            if not self.vip_data.get("pool_mem"):
-                self.vip_data["pool_mem"] = ["1.1.1.1"]
-            try:
+            self.validate_update()
+            if self.create_vip:
+                if not self.vip_data.get("pool_mem", []):
+                    self.vip_data["pool_mem"] = ["1.1.1.1"]
+                # self.members()
+                if not self.vip_data.get("pool"):
+                    self.vip_data["pool"] = "UNKNOWN"
+                self.pool()
                 if self.vip_data.get("cert"):
                     self.certificates()
-                self.members()
-                self.pool()
                 self.vip_address()
-                if self.check_pool():
-                    if self.vip_data.get("partition"):
-                        self.partition()
-                    if self.vip_data.get("advanced_policies"):
-                        self.policies()
-                    self.environment()
-                    self.vip()
-            except Exception as err:
-                log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
+                if self.vip_data.get("partition"):
+                    self.partition()
+                if self.vip_data.get("advanced_policies"):
+                    self.policies()
+                self.environment()
+                self.vip()
         else:
             log.warning(f"[Missing VIP Fields][{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {list(self.vip_data)}")
 
-    def check_pool(self):
-        """Check if pool and cert exist and match."""
-        vips = vip_attr.filter(name=self.vip_data.get("name"))
-        for vip in vips:
-            if (
-                (vip.address == self.vip_addr_uuid)
-                and (str(vip.port) == str(self.vip_data.get("port")))
-                and (vip.protocol == self.vip_data.get("protocol"))
-            ):
-                if vip.pool == self.pool_uuid:
+    def validate_update(self):
+        variables = {"vip": self.vip_data.get("name")}
+        resp = nb.graphql.query(query=self.vip_query, variables=variables).json
+        for vip in resp["data"].get("vips", []):
+            if self.vip_data.get("address").split("/")[0] == vip["address"].get("address").split("/")[0]:
+                if self.vip_data.get("port") == str(vip.get("port")) and self.vip_data.get("protocol") == vip.get("protocol"):
+                    self.create_vip = False
+                    for mem in vip["pool"].get("members"):
+                        if mem["address"].get("address").split("/")[0] not in str(self.vip_data.get("pool_mem")):
+                            self.pool()
                     if self.vip_data.get("cert"):
-                        if vip.certificates.sort() == self.certificates_uuid.sort():
-                            return False
-                    else:
-                        return False
-        return True
+                        for cert in self.vip_data.get("cert"):
+                            try:
+                                if cert.get("cert_serial") and len(cert.get("cert_serial"))>30 and cert.get("cert_serial") not in str(vip.get("certificates")):
+                                    self.certificates()
+                            except Exception as err:
+                                log.error(f"{vip}{cert}:{err}")
+
+
+    # def check_pool(self):
+    #     """Check if pool and cert exist and match."""
+    #     vips = vip_attr.filter(name=self.vip_data.get("name"))
+    #     for vip in vips:
+    #         if (
+    #             (vip.address == self.vip_addr_uuid)
+    #             and (str(vip.port) == str(self.vip_data.get("port")))
+    #             and (vip.protocol == self.vip_data.get("protocol"))
+    #         ):
+    #             if vip.pool == self.pool_uuid:
+    #                 if self.vip_data.get("cert") and len(self.vip_data.get("cert"))<=5:
+    #                     if vip.certificates.sort() == self.certificates_uuid.sort():
+    #                         return False
+    #                 else:
+    #                     return False
+    #     return True
 
     def vip(self):
         """Create VIP object in VIP Plugin module."""
-        vips = vip_attr.filter(name=self.vip_data.get("name"))
         data = {
             "name": self.vip_data.get("name"),
             "port": self.vip_data.get("port"),
@@ -316,20 +393,12 @@ class LB_VIP:
             "protocol": self.vip_data.get("protocol", "TCP").upper(),
             "tags": self.tag_uuid,
         }
-        for vip in vips:
-            if (
-                (vip.address == self.vip_addr_uuid)
-                and (str(vip.port) == str(self.vip_data.get("port")))
-                and (vip.protocol == self.vip_data.get("protocol"))
-            ):
-                log.debug("[VIP] Delete")
-                vip.delete()
         try:
             vip_attr.create(data)
         except pynautobot.core.query.RequestError:
             log.warning(f"Duplicate VIP:Port [{self.vip_data.get('loadbalancer')}] {self.vip_data.get('address')}:{self.vip_data.get('port')}")
         except Exception as err:
-            log.error(f"[2][{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
+            log.error(f"[Create][{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
 
     ###########################################
     # VIP address functions
@@ -390,7 +459,6 @@ class LB_VIP:
         cert_uuid = []
         for cert in self.vip_data.get("cert"):
             self.cert_parser(cert)
-            # certificate = certificates_attr.get(name=self.cert_info.get("cn"))
             certificate = certificates_attr.get(slug=self.slug_parser(self.cert_info.get("cn")))
             self.cert_info
             self.cert_issuer()
@@ -496,67 +564,45 @@ class LB_VIP:
     # Pool related functions
     ###########################################
 
-    def pool(self):
-        """Create Pool Member object in VIP Plugin module.
-
-        Nautobot does not accept duplicate pool name, so create exception function.
-        Function will only create, if existing pool name found, it will create new pool with DUP[no].
-        ex: pool-abc-DUP1, where number will be incremented if there are more than 1 duplicate pool.
-        """
-        log.debug(f"VIP-Info : {self.vip_data} {self.members_uuid}")
-
-        def pool_check(name):
-            """Check if pool and pool member match."""
-            pools = pools_attr.get(slug=self.slug_parser(name))
-            if pools:
-                mem1 = pools.members
-                mem1.sort()
-                mem2 = self.members_uuid
-                mem2.sort()
-                if mem1 == mem2:
-                    log.debug("Found pool and member match")
-                    return pools, True
-                else:
-                    log.debug("Found pool, but no member match")
-                    return pools, False
-            else:
-                log.debug("No pool or member match")
-                return False, False
-        name = self.vip_data.get("pool")
-        n = 0
-        while True:
-            pools, match = pool_check(name)
-            if not pools:
-                break
-            elif pools and match:
-                break
-            else:
-                n = n + 1
-                name = f"{self.vip_data.get('pool')}-DUP{n}"
-        data = {"name": name, "slug": self.slug_parser(name), "members": self.members_uuid}
-        if not pools:
-            try:
-                pools = pools_attr.create(data)
-            except Exception as err:
-                log.error(
-                    f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {self.vip_data.get('pool')} : {err}"
-                )
-        self.pool_uuid = pools.id
-
     # def pool(self):
-    #     """Create Pool Member object in VIP Plugin module."""
-    #     pools = pools_attr.get(slug=self.slug_parser(self.vip_data.get("pool")))
-    #     data = {
-    #         "name": self.vip_data.get("pool"),
-    #         "slug": self.slug_parser(self.vip_data.get("pool")),
-    #         "members": self.members_uuid,
-    #         # "tags": self.tag_uuid
-    #     }
-    #     if pools:
-    #         pool = pools.update(data)
-    #         if pool:
-    #             log.debug(f"[Pool] Updated {self.vip_data.get('pool')}")
-    #     else:
+    #     """Create Pool Member object in VIP Plugin module.
+
+    #     Nautobot does not accept duplicate pool name, so create exception function.
+    #     Function will only create, if existing pool name found, it will create new pool with DUP[no].
+    #     ex: pool-abc-DUP1, where number will be incremented if there are more than 1 duplicate pool.
+    #     """
+    #     log.debug(f"VIP-Info : {self.vip_data} {self.members_uuid}")
+
+    #     def pool_check(name):
+    #         """Check if pool and pool member match."""
+    #         pools = pools_attr.get(slug=self.slug_parser(name))
+    #         if pools:
+    #             mem1 = pools.members
+    #             mem1.sort()
+    #             mem2 = self.members_uuid
+    #             mem2.sort()
+    #             if mem1 == mem2:
+    #                 log.debug("Found pool and member match")
+    #                 return pools, True
+    #             else:
+    #                 log.debug("Found pool, but no member match")
+    #                 return pools, False
+    #         else:
+    #             log.debug("No pool or member match")
+    #             return False, False
+    #     name = self.vip_data.get("pool")
+    #     n = 0
+    #     while True:
+    #         pools, match = pool_check(name)
+    #         if not pools:
+    #             break
+    #         elif pools and match:
+    #             break
+    #         else:
+    #             n = n + 1
+    #             name = f"{self.vip_data.get('pool')}-DUP{n}"
+    #     data = {"name": name, "slug": self.slug_parser(name), "members": self.members_uuid}
+    #     if not pools:
     #         try:
     #             pools = pools_attr.create(data)
     #         except Exception as err:
@@ -565,31 +611,97 @@ class LB_VIP:
     #             )
     #     self.pool_uuid = pools.id
 
+    def pool(self):
+        """Create Pool Member object in VIP Plugin module."""
+        self.members()
+        # log.info(self.vip_data)
+        # log.info(f"Member UUID: {self.members_uuid}")
+        pools = ""
+        try:
+            # pools = pools_attr.get(members=self.members_uuid)
+            pool_lst = pools_attr.filter(members=self.members_uuid)
+            for pool in pool_lst:
+                if pool.name == self.vip_data.get("pool"):
+                    pools = pool
+        except pynautobot.core.query.RequestError:
+            pass
+        if not pools:
+            pools = pools_attr.get(slug=self.slug_parser(self.vip_data.get("pool")))
+        data = {
+            "name": self.vip_data.get("pool"),
+            "slug": self.slug_parser(self.vip_data.get("pool")),
+            "members": self.members_uuid,
+            "tags": self.tag_uuid
+        }
+        if not pools:
+            # log.info(f"create pool: {data}")
+            pools = pools_attr.create(data)
+        else:
+            # log.info(f"update pool: {data}")
+            try:
+                pools.update(data)
+            except pynautobot.core.query.RequestError as err:
+                log.error(f"{self.vip_data}:{err}")
+        self.pool_uuid = pools.id
+
+        #     pool = pools.update(data)
+        #     if pool:
+        #         log.debug(f"[Pool] Updated {self.vip_data.get('pool')}")
+        # else:
+        #     try:
+        #         pools = pools_attr.create(data)
+        #     except Exception as err:
+        #         log.error(
+        #             f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {self.vip_data.get('pool')} : {err}"
+        #         )
+        # self.pool_uuid = pools.id
+
     def members(self):
         """Create Pool Member object in VIP Plugin module."""
         members = []
-        port = 1
+        # port = mem.get("port")
         self.pool_mem_parser()
         for mem in self.pool_mem_info:
+            # log.info(mem)
             mem_uuid = self.ipam_address(mem.get("address"))
             # We cannot have member with same name and address.
             # As work around, we are also checking if member exist by name.
-            member = members_attr.get(address=mem_uuid)
+            port = "1" if mem.get("port") == "0" else mem.get("port", "1")
+            name = f'{mem.get("name").replace("%", "")}_{port}'
+            # log.info(f"mem_name: {name}")
+            member = members_attr.get(address=mem_uuid, port=port)
+            # log.info(f"member1: {member}")
             if not member:
-                member = members_attr.get(name=mem.get("name"))
+                # log.info("member not found, address and port")
+                member = members_attr.get(name=name, port=port)
+                # log.info(f"member2: {member}")
+
+            # if mem.get("port"):
+            #     name = f'{mem.get("name").replace("%", "")}_{mem.get("port")}'
+            #     member = members_attr.get(address=mem_uuid, port=mem.get("port"))
+            #     if not member:
+            #         # log.info("member not found, address and port")
+            #         member = members_attr.get(name=name, port=mem.get("port"))
+            # else:
+            #     name = mem.get("name").replace("%", "")
+            #     member =members_attr.get(address=mem_uuid)
+            #     if not member:
+            #         # log.info("member not found, name and port")
+            #         member = members_attr.get(name=name)
             if member:
                 members.append(member.id)
             else:
-                if "1.1.1.1" in str(mem.get("address")):
-                    self.dport = self.dport + 1
-                    port = self.dport
+                # if "1.1.1.1" in str(mem.get("address")):
+                #     self.dport = self.dport + 1
+                #     port = "1" if mem.get("port") == "0" else mem.get("port", 1)
                 data = {
-                    "name": mem.get("name").replace("%", ""),
-                    "slug": self.slug_parser(mem.get("name")),
+                    "name": name,
+                    "slug": self.slug_parser(name),
                     "address": mem_uuid,
                     "port": port,
                     "tags": self.tag_uuid,
                 }
+                # log.info(f"creating member {data}")
                 try:
                     member = members_attr.create(data)
                     log.debug("[Member] Created")

@@ -2,19 +2,13 @@
 """F5 Master."""
 
 import os
-import time
 import json
 import requests
-from helper.local_helper import log, uploadfile, MongoDB
-from helper.variables_lb import DISREGARD_LB_F5, F5_STANDALONE, F5_DEVICE_FIELDS
+from helper.local_helper import log, uploadfile
+from helper.variables_lb import DISREGARD_LB_F5, F5_STANDALONE, F5_DEVICE_FIELDS, F5_DEVICE_TO_QUERY
 from nautobot.nautobot_master import NautobotClient
+from helper.gitlab_helper import GitLab_Client
 from f5.f5_fun import F5HelperFun
-import concurrent.futures
-
-dbp = os.environ.get("RD_OPTION_DB_PWD")
-dbu = os.environ.get("RD_OPTION_DB_USER")
-dbh = os.environ.get("RD_OPTION_DB_HOST")
-db = MongoDB(dbu, dbp, dbh)
 
 
 def f5_master(f5, tags, ENV):
@@ -30,35 +24,35 @@ def f5_master(f5, tags, ENV):
     """
     log.debug("Master F5 Initiated.. ")
     log.debug(f"Gather Device list for {ENV}..")
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        sas_vip_info = []
-        filename = f"RUNDECK_{ENV}-{time.strftime('%m%d%Y-%H%M')}.json"
-        for item in device_list(f5):
-            discard = False
-            item["mgmt_address"] = item.pop("address")
-            item["tags"] = tags
-            item["type"] = "ltm"
-            item["environment"] = ENV
-            for i in enumerate(DISREGARD_LB_F5):
-                if DISREGARD_LB_F5[i[0]] in item["hostname"]:
-                    discard = True
-            if not discard and item.get("status") == "Active":
-                ha_state = device_ha_state(f5, item)
-                if ha_state == "active":
-                    item["ha_master_state"] = ha_state
-                elif ha_state == "standby" or ha_state == "Standalone":
-                    item["ha_master_state"] = ha_state
-                    f5f = F5HelperFun(f5, item)
-                    item["vips"] = f5f.gather_vip_info()
-                    if item["vips"]:
-                        sas_vip_info.extend(item["vips"])
-                    db.vip_collection(item["vips"])
-            db.host_collection(item)
-            executor.submit(NautobotClient, item)
-        with open(filename, "w+") as json_file:
-            json.dump(sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
-        resp = uploadfile(filename)
-        log.info(resp.strip())
+    sas_vip_info = []
+    filename = f"{os.getcwd()}/{ENV}.json"
+    for item in device_list(f5):
+        discard = False
+        item["mgmt_address"] = item.pop("address")
+        item["tags"] = tags
+        item["type"] = "ltm"
+        item["environment"] = ENV
+        for i in enumerate(DISREGARD_LB_F5):
+            if DISREGARD_LB_F5[i[0]] in item["hostname"]:
+                discard = True
+        if not discard and item.get("status") == "Active":
+            ha_state = device_ha_state(f5, item)
+            if ha_state == "active":
+                item["ha_master_state"] = ha_state
+            elif ha_state == "standby" or ha_state == "Standalone":
+                item["ha_master_state"] = ha_state
+                f5f = F5HelperFun(f5, item)
+                item["vips"] = f5f.gather_vip_info()
+                if item["vips"]:
+                    # log.info(item["vips"])
+                    sas_vip_info.extend(item["vips"])
+                    NautobotClient(item)
+    with open(filename, "w+") as json_file:
+        json.dump(sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
+    glab = GitLab_Client(filepath=f"lb-vip/{ENV}.json")
+    glab.update_file(filename)
+    # resp = uploadfile(filename)
+    # log.info(resp.strip())
     log.info("Job done")
 
 
@@ -76,7 +70,7 @@ def device_list(f5):
         jresp = json.loads(resp.text)
         log.debug(f"F5 Device count : {len(jresp.get('items'))}")
         device_info = []
-        F5_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+        # F5_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
         for device in jresp["items"]:
             # For Test or Troubleshooting purpose
             # Filter the devices for which you want to discover VIPs

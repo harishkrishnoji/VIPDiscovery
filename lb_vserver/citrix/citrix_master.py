@@ -8,12 +8,7 @@ from citrix.citrix_fun import pull_vip_info, pull_sgrp_info, pull_cert_info
 from helper.local_helper import log, uploadfile, MongoDB
 from helper.variables_lb import DISREGARD_VIP, NS_DEVICE_FIELDS, DISREGARD_LB_CITRIX, FILTER_VIP
 from nautobot.nautobot_master import NautobotClient
-import concurrent.futures
-
-dbp = os.environ.get("RD_OPTION_DB_PWD")
-dbu = os.environ.get("RD_OPTION_DB_USER")
-dbh = os.environ.get("RD_OPTION_DB_HOST")
-db = MongoDB(dbu, dbp, dbh)
+from helper.gitlab_helper import GitLab_Client
 
 
 def citrix_master(adm, tags, ENV):
@@ -26,42 +21,41 @@ def citrix_master(adm, tags, ENV):
     """
     log.debug("Master Citrix Initiated.. ")
     log.debug(f"Gather Device list for {ENV}..")
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        ns_info = ns_device_lst(adm)
-        sas_vip_info = []
-        filename = f"RUNDECK_{ENV}-{time.strftime('%m%d%Y-%H%M')}.json"
-        for device in ns_info:
-            # Filter to look for Standby, non OFS, and Standalone
-            device["mgmt_address"] = device["ipv4_address"]
-            device["tags"] = tags
-            if "OFS_Netscaler" in ENV:
-                var = device["ha_ip_address"].startswith("11.")
-                if var:
-                    device["ipv4_address"] = device["ipv4_address"].replace("10", "11", 1)
-                    device["environment"] = ENV
-            elif "OFD_Netscaler" in ENV:
-                var = device["ha_ip_address"].startswith("10.") or device["ha_ip_address"].startswith("167.")
-                if var:
-                    device["environment"] = ENV
-            if device.get("environment") == ENV:
-                if (device["hostname"] not in DISREGARD_LB_CITRIX) and (
-                    (
-                        device["ha_master_state"] == "Secondary"
-                        and device["instance_state"] == "Up"
-                        and device["ipv4_address"] != ""
-                    )
-                    or ("DEFRA1SLBSFA02A" in device["hostname"] and device["instance_state"] == "Up")
-                ):
-                    device["vips"] = gather_vip_info(device, adm, ENV)
-                    if device["vips"]:
-                        sas_vip_info.extend(device["vips"])
-                    db.vip_collection(device["vips"])
-                db.host_collection(device)
-                executor.submit(NautobotClient, device)
-        with open(filename, "w+") as json_file:
-            json.dump(sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
-        resp = uploadfile(filename)
-        log.info(resp.strip())
+    ns_info = ns_device_lst(adm)
+    sas_vip_info = []
+    filename = f"RUNDECK_{ENV}-{time.strftime('%m%d%Y-%H%M')}.json"
+    for device in ns_info:
+        # Filter to look for Standby, non OFS, and Standalone
+        device["mgmt_address"] = device["ipv4_address"]
+        device["tags"] = tags
+        if "OFS_Netscaler" in ENV:
+            var = device["ha_ip_address"].startswith("11.")
+            if var:
+                device["ipv4_address"] = device["ipv4_address"].replace("10", "11", 1)
+                device["environment"] = ENV
+        elif "OFD_Netscaler" in ENV:
+            var = device["ha_ip_address"].startswith("10.") or device["ha_ip_address"].startswith("167.")
+            if var:
+                device["environment"] = ENV
+        if device.get("environment") == ENV:
+            if (device["hostname"] not in DISREGARD_LB_CITRIX) and (
+                (
+                    device["ha_master_state"] == "Secondary"
+                    and device["instance_state"] == "Up"
+                    and device["ipv4_address"] != ""
+                )
+                or ("DEFRA1SLBSFA02A" in device["hostname"] and device["instance_state"] == "Up")
+            ):
+                device["vips"] = gather_vip_info(device, adm, ENV)
+                if device["vips"]:
+                    sas_vip_info.extend(device["vips"])
+                    NautobotClient(device)
+    with open(filename, "w+") as json_file:
+        json.dump(sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
+    glab = GitLab_Client(filepath=f"lb-vip/{ENV}.json")
+    glab.update_file(filename)
+    # resp = uploadfile(filename)
+    # log.info(resp.strip())
     log.info("Job done")
 
 
