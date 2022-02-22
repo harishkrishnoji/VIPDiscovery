@@ -37,11 +37,11 @@ class F5HelperFun:
                         {
                             "name": pool_mem.get("name").split(":")[0],
                             "address": self.pool_mem_addr(pool_mem.get("address")),
-                            "port": self.pool_mem_port(pool_mem.get("name"))
+                            "port": self.pool_mem_port(pool_mem.get("name")),
                         }
                     )
                 self.pool_lst.update({pool["name"]: pool_m_lst})
-    
+
     def pool_mem_addr(self, addr):
         """Parse pool mem address. ex: "10.35.48.141%5"."""
         if "any6" in addr:
@@ -52,7 +52,6 @@ class F5HelperFun:
     def pool_mem_port(self, addr):
         """Parse pool mem port. ex: "255.255.255.254:41003"."""
         return addr.split(":")[1]
-
 
     def ssl_profile_info(self):
         """Get all ssl profile info for specific device UUID."""
@@ -119,11 +118,7 @@ class F5HelperFun:
                 port = vip.get("destination").split("/")[2].split("%")[1].split(":")[1]
             # Filter for VIPs which need to be discarded (DISREGARD_VIP) ex: '1.1.1.1'.
             # For Testing and Troubleshooting, filter specific VIP (FILTER_VIP).
-            if (
-                addr not in DISREGARD_VIP
-                and vip.get("pool")
-                and ("All" in FILTER_VIP or vip.get("name") in FILTER_VIP)
-            ):
+            if addr not in DISREGARD_VIP and vip.get("pool") and ("All" in FILTER_VIP or vip.get("name") in FILTER_VIP):
                 vip_info = self.vip_dict_format(vip, addr, port)
                 if vip.get("subPath"):
                     vip_info["partition"] = f'{vip.get("partition")}_{vip.get("subPath")}'
@@ -139,12 +134,12 @@ class F5HelperFun:
                 if not vip_info.get("advanced_policies"):
                     vip_info.pop("advanced_policies")
                 if not vip_info.get("cert"):
-                    vip_info.pop("cert")  
+                    vip_info.pop("cert")
                 return vip_info
 
     def vip_dict_format(self, vip, addr, port):
         """VIP data dictionary format."""
-        return dict(        
+        return dict(
             [
                 ("name", vip.get("name")),
                 ("address", addr),
@@ -159,7 +154,6 @@ class F5HelperFun:
                 ("tags", self.item.get("tags")),
             ]
         )
-
 
     def get_api_call(self, uri):
         """Get API call function."""

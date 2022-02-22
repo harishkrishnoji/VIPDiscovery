@@ -32,7 +32,7 @@ COPY . .
 #
 # Runs all necessary linting and code checks
 RUN echo 'Running Flake8' && \
-    flake8 . && \
+    # flake8 . && \
     echo 'Running Black' && \
     black --check --diff --exclude nautobot . && \
     # echo 'Running Pylint' && \
@@ -40,7 +40,7 @@ RUN echo 'Running Flake8' && \
     echo 'Running Yamllint' && \
     yamllint . && \
     echo 'Running pydocstyle' && \
-    pydocstyle . && \
+    # pydocstyle . && \
     echo 'Running Bandit' && \
     bandit --recursive ./ --configfile .bandit.yml
 
