@@ -3,19 +3,14 @@
 
 import json
 from helper.local_helper import log
-from helper.variables_lb import DISREGARD_VIP, FILTER_VIP
+from f5.f5_filters import filter_vips
 
 
 class F5HelperFun:
     """Create a F5 Function client."""
 
     def __init__(self, f5, item):
-        """Initialize the F5 Function client.
-
-        Args:
-            f5 (Class): F5 API Client.
-            item (dict): LB related and UUID info.
-        """
+        """Initialize the F5 Function client."""
         self.log = log
         self.f5 = f5
         self.item = item
@@ -85,17 +80,10 @@ class F5HelperFun:
             }
 
     def gather_vip_info(self):
-        """Get all VIP info for specific device UUID.
-
-        Returns:
-            dict: VIP info.
-        """
-        log.debug("Gathering VIP Info..")
-        uri = "/rest-proxy/mgmt/tm/ltm/virtual?expandSubcollections=true"
-        resp = self.get_api_call(uri)
+        """Get all VIP info for specific device UUID."""
+        resp = self.get_api_call("/rest-proxy/mgmt/tm/ltm/virtual?expandSubcollections=true")
         if not resp:
-            uri = "/rest-proxy/mgmt/tm/ltm/virtual"
-            resp = self.get_api_call(uri)
+            resp = self.get_api_call("/rest-proxy/mgmt/tm/ltm/virtual")
         vip_lst = []
         if resp:
             self.log.debug(f"[{len(resp)}] VIPs...")
@@ -111,14 +99,8 @@ class F5HelperFun:
     def vip_info_parser(self, vip):
         """VIP info parser and data constructor."""
         if vip.get("destination") != ":0":
-            addr = vip.get("destination").split("/")[2].split(":")[0]
-            port = vip.get("destination").split("/")[2].split(":")[1]
-            if "%" in vip.get("destination"):
-                addr = vip.get("destination").split("/")[2].split("%")[0]
-                port = vip.get("destination").split("/")[2].split("%")[1].split(":")[1]
-            # Filter for VIPs which need to be discarded (DISREGARD_VIP) ex: '1.1.1.1'.
-            # For Testing and Troubleshooting, filter specific VIP (FILTER_VIP).
-            if addr not in DISREGARD_VIP and vip.get("pool") and ("All" in FILTER_VIP or vip.get("name") in FILTER_VIP):
+            addr, port = self.vip_add_port_parser(vip)
+            if filter_vips(addr, vip):
                 vip_info = self.vip_dict_format(vip, addr, port)
                 if vip.get("subPath"):
                     vip_info["partition"] = f'{vip.get("partition")}_{vip.get("subPath")}'
@@ -136,6 +118,15 @@ class F5HelperFun:
                 if not vip_info.get("cert"):
                     vip_info.pop("cert")
                 return vip_info
+
+    def vip_add_port_parser(self, vip):
+        """VIP and Port formater."""
+        addr = vip.get("destination").split("/")[2].split(":")[0]
+        port = vip.get("destination").split("/")[2].split(":")[1]
+        if "%" in vip.get("destination"):
+            addr = vip.get("destination").split("/")[2].split("%")[0]
+            port = vip.get("destination").split("/")[2].split("%")[1].split(":")[1]
+        return addr, port
 
     def vip_dict_format(self, vip, addr, port):
         """VIP data dictionary format."""

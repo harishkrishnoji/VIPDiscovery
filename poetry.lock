@@ -81,6 +81,26 @@ url = "https://nexus-appdev.1dc.com/repository/pypi-group/simple"
 reference = "nexus"
 
 [[package]]
+name = "beautifulsoup4"
+version = "4.10.0"
+description = "Screen-scraping library"
+category = "main"
+optional = false
+python-versions = ">3.0.0"
+
+[package.dependencies]
+soupsieve = ">1.2"
+
+[package.extras]
+html5lib = ["html5lib"]
+lxml = ["lxml"]
+
+[package.source]
+type = "legacy"
+url = "https://nexus-appdev.1dc.com/repository/pypi-group/simple"
+reference = "nexus"
+
+[[package]]
 name = "black"
 version = "19.10b0"
 description = "The uncompromising code formatter."
@@ -99,6 +119,22 @@ typed-ast = ">=1.4.0"
 
 [package.extras]
 d = ["aiohttp (>=3.3.2)", "aiohttp-cors"]
+
+[package.source]
+type = "legacy"
+url = "https://nexus-appdev.1dc.com/repository/pypi-group/simple"
+reference = "nexus"
+
+[[package]]
+name = "bs4"
+version = "0.0.1"
+description = "Screen-scraping library"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+beautifulsoup4 = "*"
 
 [package.source]
 type = "legacy"
@@ -300,7 +336,7 @@ reference = "nexus"
 
 [[package]]
 name = "helper-fts"
-version = "1.0.7"
+version = "1.0.9"
 description = "Helper Script for FTS Engineers"
 category = "main"
 optional = false
@@ -308,11 +344,32 @@ python-versions = ">=3.8,<4.0"
 
 [package.dependencies]
 colorlog = ">=6.6.0,<7.0.0"
+hvac = ">=0.11.2,<0.12.0"
 
 [package.source]
 type = "legacy"
 url = "https://git-enterprise-jc.onefiserv.net/api/v4/projects/1656/packages/pypi/simple"
 reference = "gitlab"
+
+[[package]]
+name = "hvac"
+version = "0.11.2"
+description = "HashiCorp Vault API client"
+category = "main"
+optional = false
+python-versions = ">=2.7"
+
+[package.dependencies]
+requests = ">=2.21.0"
+six = ">=1.5.0"
+
+[package.extras]
+parser = ["pyhcl (>=0.3.10)"]
+
+[package.source]
+type = "legacy"
+url = "https://nexus-appdev.1dc.com/repository/pypi-group/simple"
+reference = "nexus"
 
 [[package]]
 name = "idna"
@@ -798,7 +855,7 @@ reference = "nexus"
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
@@ -827,6 +884,19 @@ description = "This package provides 29 stemmers for 28 languages generated from
 category = "dev"
 optional = false
 python-versions = "*"
+
+[package.source]
+type = "legacy"
+url = "https://nexus-appdev.1dc.com/repository/pypi-group/simple"
+reference = "nexus"
+
+[[package]]
+name = "soupsieve"
+version = "2.3.1"
+description = "A modern CSS selector implementation for Beautiful Soup."
+category = "main"
+optional = false
+python-versions = ">=3.6"
 
 [package.source]
 type = "legacy"
@@ -970,7 +1040,7 @@ reference = "nexus"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "c0ae077639d4372e50119d50addeb99021c8b4292b4d68841a41826e35fc34f9"
+content-hash = "81b4f81782a4f2fdc9281a3e74e7171b5620fe8606ce387e9a22f58928510599"
 
 [metadata.files]
 appdirs = [
@@ -993,9 +1063,16 @@ bandit = [
     {file = "bandit-1.7.1-py3-none-any.whl", hash = "sha256:f5acd838e59c038a159b5c621cf0f8270b279e884eadd7b782d7491c02add0d4"},
     {file = "bandit-1.7.1.tar.gz", hash = "sha256:a81b00b5436e6880fa8ad6799bc830e02032047713cbb143a12939ac67eb756c"},
 ]
+beautifulsoup4 = [
+    {file = "beautifulsoup4-4.10.0-py3-none-any.whl", hash = "sha256:9a315ce70049920ea4572a4055bc4bd700c940521d36fc858205ad4fcde149bf"},
+    {file = "beautifulsoup4-4.10.0.tar.gz", hash = "sha256:c23ad23c521d818955a4151a67d81580319d4bf548d3d49f4223ae041ff98891"},
+]
 black = [
     {file = "black-19.10b0-py36-none-any.whl", hash = "sha256:1b30e59be925fafc1ee4565e5e08abef6b03fe455102883820fe5ee2e4734e0b"},
     {file = "black-19.10b0.tar.gz", hash = "sha256:c2edb73a08e9e0e6f65a0e6af18b059b8b1cdd5bef997d7a0b181df93dc81539"},
+]
+bs4 = [
+    {file = "bs4-0.0.1.tar.gz", hash = "sha256:36ecea1fd7cc5c0c6e4a1ff075df26d50da647b75376626cc186e2212886dd3a"},
 ]
 certifi = [
     {file = "certifi-2021.10.8-py2.py3-none-any.whl", hash = "sha256:d62a0163eb4c2344ac042ab2bdf75399a71a2d8c7d47eac2e2ee91b9d6339569"},
@@ -1091,8 +1168,12 @@ gitpython = [
     {file = "GitPython-3.1.24.tar.gz", hash = "sha256:df83fdf5e684fef7c6ee2c02fc68a5ceb7e7e759d08b694088d0cacb4eba59e5"},
 ]
 helper-fts = [
-    {file = "helper-fts-1.0.7.tar.gz", hash = "sha256:ed10ba8a3f92442cc361ea704726852997caa9f616faf422f5fb87d76ac6fae7"},
-    {file = "helper_fts-1.0.7-py3-none-any.whl", hash = "sha256:1447b1524a830c3046a37fe00af7f8ad5ca424290a223e645327779983c13426"},
+    {file = "helper-fts-1.0.9.tar.gz", hash = "sha256:709a7c6f9f183ee863df90883cfcf6a2c2f7f5de88614998728f934ca95febc2"},
+    {file = "helper_fts-1.0.9-py3-none-any.whl", hash = "sha256:7b13ad87e0d85e19c732ca10cd85112b51a2c8155b324394c5bd495a9e8be124"},
+]
+hvac = [
+    {file = "hvac-0.11.2-py2.py3-none-any.whl", hash = "sha256:3e8a34804b1e20954a2b4991cc13ed9c09b32e50dadd9d3438224481150f6568"},
+    {file = "hvac-0.11.2.tar.gz", hash = "sha256:f905c59d32d88d3f67571fe5a8a78de4659e04798ad809de439f667247d13626"},
 ]
 idna = [
     {file = "idna-3.3-py3-none-any.whl", hash = "sha256:84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff"},
@@ -1437,6 +1518,10 @@ smmap = [
 snowballstemmer = [
     {file = "snowballstemmer-2.2.0-py2.py3-none-any.whl", hash = "sha256:c8e1716e83cc398ae16824e5572ae04e0d9fc2c6b985fb0f900f5f0c96ecba1a"},
     {file = "snowballstemmer-2.2.0.tar.gz", hash = "sha256:09b16deb8547d3412ad7b590689584cd0fe25ec8db3be37788be3810cbf19cb1"},
+]
+soupsieve = [
+    {file = "soupsieve-2.3.1-py3-none-any.whl", hash = "sha256:1a3cca2617c6b38c0343ed661b1fa5de5637f257d4fe22bd9f1338010a1efefb"},
+    {file = "soupsieve-2.3.1.tar.gz", hash = "sha256:b8d49b1cd4f037c7082a9683dfa1801aa2597fb11c3a1155b7a5b94829b4f1f9"},
 ]
 stevedore = [
     {file = "stevedore-3.5.0-py3-none-any.whl", hash = "sha256:a547de73308fd7e90075bb4d301405bebf705292fa90a90fc3bcf9133f58616c"},
