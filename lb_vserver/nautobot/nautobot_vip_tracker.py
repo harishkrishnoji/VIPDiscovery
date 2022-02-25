@@ -173,36 +173,41 @@ class LB_VIP(VIPT_ATTR):
     def certificates(self):
         """Create Certificate object in VIP Plugin module."""
         cert_uuid = []
-        for cert in self.vip_data.get("cert"):
-            self.cert_parser(cert)
-            certificate = VIPT_ATTR.certificates_attr.get(slug=self.slug_parser(self.cert_info.get("cn")))
-            self.cert_info
-            self.cert_issuer()
-            data = {
-                "name": self.cert_info.get("cn"),
-                "slug": self.slug_parser(self.cert_info.get("cn")),
-                "exp": self.cert_info.get("exp", "2000-01-01T00:00"),
-                "serial_number": self.cert_info.get("serial"),
-                "issuer": self.cert_issuer_uuid,
-                "cert_type": "RSA",
-            }
-            if certificate:
-                try:
-                    if data.get("serial_number") and len(data.get("serial_number")) > 8:
-                        certificate.update(data)
-                except Exception as err:
-                    log.error(
-                        f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {cert.get('cert_cn')} : {err}"
-                    )
-            else:
-                try:
-                    certificate = VIPT_ATTR.certificates_attr.create(data)
-                except Exception as err:
-                    log.error(
-                        f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {cert.get('cert_cn')} : {err}"
-                    )
-            if certificate:
-                cert_uuid.append(certificate.id)
+        try:
+            for cert in self.vip_data.get("cert"):
+                self.cert_parser(cert)
+                certificate = VIPT_ATTR.certificates_attr.get(slug=self.slug_parser(self.cert_info.get("cn")))
+                self.cert_info
+                self.cert_issuer()
+                data = {
+                    "name": self.cert_info.get("cn"),
+                    "slug": self.slug_parser(self.cert_info.get("cn")),
+                    "exp": self.cert_info.get("exp", "2000-01-01T00:00"),
+                    "serial_number": self.cert_info.get("serial"),
+                    "issuer": self.cert_issuer_uuid,
+                    "cert_type": "RSA",
+                }
+                if certificate:
+                    try:
+                        if data.get("serial_number") and len(data.get("serial_number")) > 8:
+                            certificate.update(data)
+                    except Exception as err:
+                        log.error(
+                            f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {cert.get('cert_cn')} : {err}"
+                        )
+                else:
+                    try:
+                        certificate = VIPT_ATTR.certificates_attr.create(data)
+                    except Exception as err:
+                        log.error(
+                            f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {cert.get('cert_cn')} : {err}"
+                        )
+                if certificate:
+                    cert_uuid.append(certificate.id)
+        except Exception as err:
+            log.error(
+                f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} Cert error : {err}"
+            )
         self.certificates_uuid = cert_uuid
 
     def cert_parser(self, cert_data):
@@ -278,35 +283,57 @@ class LB_VIP(VIPT_ATTR):
 
     def pool(self):
         """Create Pool Member object in VIP Plugin module."""
-        self.members()
-        # log.info(self.vip_data)
-        # log.info(f"Member UUID: {self.members_uuid}")
-        pools = ""
         try:
-            # pools = pools_attr.get(members=self.members_uuid)
-            pool_lst = VIPT_ATTR.pools_attr.filter(members=self.members_uuid)
-            for pool in pool_lst:
-                if pool.name == self.vip_data.get("pool"):
-                    pools = pool
+            self.members()
+            pools = self.pool_exist_by_addr(self.members_uuid, self.vip_data.get("pool"))
+            if not pools:
+                pools = self.pool_exist_by_name(self.vip_data.get("pool"))
+            data = {
+                "name": self.vip_data.get("pool"),
+                "slug": self.slug_parser(self.vip_data.get("pool")),
+                "members": self.members_uuid,
+                "tags": self.tag_uuid,
+            }
+            if not pools:
+                pools = VIPT_ATTR.pools_attr.create(data)
+            else:
+                try:
+                    pools.update(data)
+                except pynautobot.core.query.RequestError as err:
+                    log.error(f"[PoolUpdateError] {self.vip_data} {self.vip_data.get('pool')} :{err}")
+            self.pool_uuid = pools.id
+        except Exception as err:
+            log.error(f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {self.vip_data.get('pool')} : {err}")
+            self.pool_error()
+
+    def pool_exist_by_name(self, name):
+        pools = VIPT_ATTR.pools_attr.get(slug=self.slug_parser(name))
+        if pools:
+            return pools
+
+    def pool_exist_by_addr(self, addr_uuid, name=""):
+        try:
+            pool_lst = VIPT_ATTR.pools_attr.filter(members=addr_uuid)
+            if name:
+                for pool in pool_lst:
+                    if pool.name == name:
+                        pools = pool
+                        return pools
         except pynautobot.core.query.RequestError:
             pass
+
+    def pool_error(self):
+        pool_name = "pool_error"
+        mem_addr_uuid = self.ipam_address("1.1.1.1")
+        pools = self.pool_exist_by_addr(mem_addr_uuid)
         if not pools:
-            pools = VIPT_ATTR.pools_attr.get(slug=self.slug_parser(self.vip_data.get("pool")))
-        data = {
-            "name": self.vip_data.get("pool"),
-            "slug": self.slug_parser(self.vip_data.get("pool")),
-            "members": self.members_uuid,
-            "tags": self.tag_uuid,
-        }
-        if not pools:
-            # log.info(f"create pool: {data}")
+            data = {
+                "name": pool_name,
+                "slug": self.slug_parser(pool_name),
+                "members": [mem_addr_uuid],
+                "tags": self.tag_uuid,
+            }
             pools = VIPT_ATTR.pools_attr.create(data)
-        else:
-            # log.info(f"update pool: {data}")
-            try:
-                pools.update(data)
-            except pynautobot.core.query.RequestError as err:
-                log.error(f"{self.vip_data}:{err}")
         self.pool_uuid = pools.id
 
     def members(self):
