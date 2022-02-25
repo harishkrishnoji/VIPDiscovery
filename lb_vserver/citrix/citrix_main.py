@@ -35,7 +35,6 @@ class CITIRIX_MAIN:
                 if device["ha_ip_address"].startswith("10.") or device["ha_ip_address"].startswith("167."):
                     device["environment"] = self.env
             if filter_device(device, self.env):
-                log.info(device.get("hostname"))
                 device["vips"] = self.gather_vip_info(device)
                 if device.get("vips"):
                     self.sas_vip_info.extend(device.get("vips"))

@@ -26,14 +26,14 @@ class F5_MAIN:
     def f5_main(self):
         """Gather all F5 device list from BigIQ, run through filter."""
         for item in self.device_list():
-            log.info(item.get("hostname"))
-            self.f5f = F5HelperFun(self.f5, item)
             item["mgmt_address"] = item.pop("address")
             item["tags"] = self.tags
             item["type"] = "ltm"
             item["environment"] = self.env
             if not filter_device1(item) and item.get("status") == "Active":
                 ha_state = self.device_ha_state(item)
+                if ha_state:
+                    self.f5f = F5HelperFun(self.f5, item)
                 if ha_state == "active":
                     item["ha_master_state"] = ha_state
                 elif ha_state == "standby" or ha_state == "Standalone":
