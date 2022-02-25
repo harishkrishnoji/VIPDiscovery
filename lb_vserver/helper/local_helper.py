@@ -18,7 +18,6 @@ vdata = {
     "namespace": os.environ.get("VAULT_NAMESPACE"),
     "role_id": os.environ.get("VAULT_ROLE_ID"),
     "secret_id": os.environ.get("VAULT_SECRET_ID"),
-    "url": os.environ.get("VAULT_ADDR"),
 }
 
 
