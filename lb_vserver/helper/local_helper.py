@@ -41,7 +41,7 @@ def getfile(fname=""):
         return json.loads(response.text)
 
 
-def get_credentials(path):
+def get_credentials():
     path = "loadbalancer_secrets"
     # vault_data = hashi_vault(token=token, path=path)
     vdata["path"] = path

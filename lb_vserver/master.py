@@ -13,11 +13,11 @@ from helper.local_helper import get_credentials, get_nb_keys
 
 env = os.environ.get("RD_OPTION_ENV")
 token = os.environ.get("HASHI_TOKEN")
-url = os.environ.get("RD_OPTION_NAUTOBOT_URL")
+nburl = os.environ.get("RD_OPTION_NAUTOBOT_URL")
 
 if __name__ == "__main__":
     log.info(f"Environment {env}")
-    svcp, svcu, lowu, lowp = get_credentials(token, "loadbalancer_secrets")
+    svcp, svcu, lowu, lowp = get_credentials()
     try:
         if "Netscaler" in env:
             adm = ADMClient("https://adc.1dc.com/nitro/v1/", svcu, svcp)
@@ -37,7 +37,7 @@ if __name__ == "__main__":
                 f5 = BigIQClient("https://txppbigiq01.network.onefiserv.net/mgmt/", lowu, lowp, "TACACS+")
             F5_MAIN(f5, tags, env)
         elif "DELETE-ALL" in env:
-            vipdel = LB_VIP_DELETE(get_nb_keys())
+            vipdel = LB_VIP_DELETE(get_nb_keys(nburl))
             vipdel.vip_delete()
     except Exception as err:
         log.error(f"{err}")
