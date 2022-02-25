@@ -1040,7 +1040,7 @@ reference = "nexus"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "81b4f81782a4f2fdc9281a3e74e7171b5620fe8606ce387e9a22f58928510599"
+content-hash = "c77181d6695d9e9533fe1564bd812fee7db7c86faa512acec353002bebc4aabe"
 
 [metadata.files]
 appdirs = [

@@ -14,7 +14,7 @@ token = os.environ.get("HASHI_TOKEN")
 # fmt: off
 class NBLogIn:
     url                     = os.environ.get("RD_OPTION_NAUTOBOT_URL")
-    token                   = get_nb_keys(token, "nautobot")
+    token                   = get_nb_keys(url)
     nb                      = pynautobot.api(url, token=token, threading=True)
     nb.http_session.verify  = False
 
