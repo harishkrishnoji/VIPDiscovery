@@ -25,7 +25,6 @@ class CITIRIX_MAIN:
     def citrix_main(self):
         """Gather all NetScaler device list from ADM, run through filter."""
         for device in self.ns_device_lst():
-            # log.info(device.get("hostname"))
             device["mgmt_address"] = device.get("ipv4_address")
             device["tags"] = self.tags
             if "OFS_Netscaler" in self.env:

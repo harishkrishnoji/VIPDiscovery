@@ -1,11 +1,10 @@
-from helper.variables_lb import DISREGARD_LB_F5, F5_STANDALONE, F5_DEVICE_TO_QUERY, DISREGARD_VIP, FILTER_VIP
+import os
+from helper.variables_lb import DISREGARD_LB_F5, F5_STANDALONE, DISREGARD_VIP, FILTER_VIP
 
-# F5_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+F5_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
 
 
 def filter_device(device):
-    # For Test or Troubleshooting purpose
-    # Filter the devices for which you want to discover VIPs
     if "All" in F5_DEVICE_TO_QUERY or device["hostname"] in F5_DEVICE_TO_QUERY:
         return True
 

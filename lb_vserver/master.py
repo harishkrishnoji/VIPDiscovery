@@ -13,32 +13,30 @@ from helper.local_helper import get_credentials, get_nb_keys
 
 env = os.environ.get("RD_OPTION_ENV")
 token = os.environ.get("HASHI_TOKEN")
-log.info(f"Environment {env}")
 
 if __name__ == "__main__":
+    log.info(f"Environment {env}")
     svcp, svcu, lowu, lowp = get_credentials(token, "loadbalancer_secrets")
-    if "Netscaler" in env:
-        adm = ADMClient("https://adc.1dc.com/nitro/v1/", svcu, svcp)
-        if env == "OFD_Netscaler":
-            tags = ["ofd"]
-        elif env == "OFS_Netscaler":
+    try:
+        if "Netscaler" in env:
+            adm = ADMClient("https://adc.1dc.com/nitro/v1/", svcu, svcp)
+            if env == "OFD_Netscaler":
+                tags = ["ofd"]
+            elif env == "OFS_Netscaler":
+                tags = ["ofs"]
+            CITIRIX_MAIN(adm, tags, env)
+        elif "F5" in env:
             tags = ["ofs"]
-        # citrix_master(adm, tags, env)
-        CITIRIX_MAIN(adm, tags, env)
-    elif "F5" in env:
-        tags = ["ofs"]
-        if env == "OFD_F5":
-            f5 = BigIQClient("https://USOMA1VCDBIQ01A.1dc.com/mgmt/", svcu, svcp, "ACS-RADIUS")
-            tags = ["ofd"]
-        elif env == "OFS_F5":
-            f5 = BigIQClient("https://jxppbigiq01.network.onefiserv.net/mgmt/", svcu, svcp, "ClearPass")
-        elif env == "OFS_F5_Lower":
-            f5 = BigIQClient("https://txppbigiq01.network.onefiserv.net/mgmt/", lowu, lowp, "TACACS+")
-        # f5_master(f5, tags, env)
-        F5_MAIN(f5, tags, env)
-    elif "DELETE-ALL" in env:
-        vipdel = LB_VIP_DELETE(get_nb_keys())
-        vipdel.vip_delete()
-
-    # except Exception as err:
-    #     log.error(f"{err}")
+            if env == "OFD_F5":
+                f5 = BigIQClient("https://USOMA1VCDBIQ01A.1dc.com/mgmt/", svcu, svcp, "ACS-RADIUS")
+                tags = ["ofd"]
+            elif env == "OFS_F5":
+                f5 = BigIQClient("https://jxppbigiq01.network.onefiserv.net/mgmt/", svcu, svcp, "ClearPass")
+            elif env == "OFS_F5_Lower":
+                f5 = BigIQClient("https://txppbigiq01.network.onefiserv.net/mgmt/", lowu, lowp, "TACACS+")
+            F5_MAIN(f5, tags, env)
+        elif "DELETE-ALL" in env:
+            vipdel = LB_VIP_DELETE(get_nb_keys())
+            vipdel.vip_delete()
+    except Exception as err:
+        log.error(f"{err}")
