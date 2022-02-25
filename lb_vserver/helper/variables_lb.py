@@ -11,17 +11,17 @@ VIP_FIELDS = list(["address", "port", "loadbalancer", "name"])
 #   List of Devices to pull data from BIG-IQ / ADM Netscaler
 #########################################################################
 
-F5_DEVICE_TO_QUERY = list(["lv-f5core-01.fiservip.net"])
-NS_DEVICE_TO_QUERY = list(["USCHD1SLBINT04B"])
+# F5_DEVICE_TO_QUERY = list(["ltm1.opensolutionsasp.com"])
+F5_DEVICE_TO_QUERY = list(["INBOM1ASMINT01A.1dc.com"])
+NS_DEVICE_TO_QUERY = list(["USOMA1SLBSFD01A", "USOMA1SLBSFD01B"])
 FILTER_VIP = list(["All"])
+# FILTER_VIP = list(["chh-dna-1206v-s"])
 
 #########################################################################
 #   List of Keys/values which need to be collected from BIG-IQ / ADM Netscaler
 #########################################################################
 
-F5_DEVICE_FIELDS = list(
-    ["uuid", "address", "product", "version", "hostname", "managementAddress", "platformMarketingName"]
-)
+F5_DEVICE_FIELDS = list(["uuid", "address", "product", "version", "hostname", "platformMarketingName"])
 NS_DEVICE_FIELDS = list(
     [
         "ha_ip_address",

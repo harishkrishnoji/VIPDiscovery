@@ -5,39 +5,38 @@ import os
 from citrix_adm.client import ADMClient
 from f5_bigiq.client import BigIQClient
 from helper.local_helper import log
-from citrix.citrix_master import citrix_master
-from f5.f5_master import f5_master
+from citrix.citrix_main import CITIRIX_MAIN
+from f5.f5_main import F5_MAIN
+from nautobot.nautobot_vip_delete import LB_VIP_DELETE
+from helper.local_helper import get_credentials, get_nb_keys
 
-ENV = os.environ.get("RD_OPTION_ENV")
-svcp = os.environ.get("RD_OPTION_SVC_PWD")
-svcu = os.environ.get("RD_OPTION_SVC_USER")
-lowu = os.environ.get("RD_OPTION_LOWER_USER")
-lowp = os.environ.get("RD_OPTION_LOWER_PWD")
 
-log.debug("Master Initiated.. ")
-log.info(f"Environment {ENV}")
+env = os.environ.get("RD_OPTION_ENV")
+token = os.environ.get("HASHI_TOKEN")
 
 if __name__ == "__main__":
+    log.info(f"Environment {env}")
+    svcp, svcu, lowu, lowp = get_credentials(token, "loadbalancer_secrets")
     try:
-        if "Netscaler" in ENV:
+        if "Netscaler" in env:
             adm = ADMClient("https://adc.1dc.com/nitro/v1/", svcu, svcp)
-            if ENV == "OFD_Netscaler":
-                tags = ["ofd", "netscaler"]
-            elif ENV == "OFS_Netscaler":
-                tags = ["ofs", "netscaler"]
-            citrix_master(adm, tags, ENV)
-        elif "F5" in ENV:
-            if ENV == "OFD_F5":
-                f5 = BigIQClient("https://10.165.232.72/mgmt/", svcu, svcp, "ACS-RADIUS")
-                tags = ["ofd", "f5"]
-            elif ENV == "OFS_F5":
-                # f5 = BigIQClient("https://11.224.134.85/mgmt/", svcu, svcp, "ClearPass")
-                f5 = BigIQClient("https://10.224.134.85/mgmt/", svcu, svcp, "ClearPass")
-                tags = ["ofs", "f5"]
-            elif ENV == "OFS_F5_Lower":
-                f5 = BigIQClient("https://10.35.169.85/mgmt/", lowu, lowp, "TACACS+")
-                # f5 = BigIQClient("https://11.35.169.85/mgmt/", lowu, lowp, "TACACS+")
-                tags = ["ofs", "f5", "lowers"]
-            f5_master(f5, tags, ENV)
+            if env == "OFD_Netscaler":
+                tags = ["ofd"]
+            elif env == "OFS_Netscaler":
+                tags = ["ofs"]
+            CITIRIX_MAIN(adm, tags, env)
+        elif "F5" in env:
+            tags = ["ofs"]
+            if env == "OFD_F5":
+                f5 = BigIQClient("https://USOMA1VCDBIQ01A.1dc.com/mgmt/", svcu, svcp, "ACS-RADIUS")
+                tags = ["ofd"]
+            elif env == "OFS_F5":
+                f5 = BigIQClient("https://jxppbigiq01.network.onefiserv.net/mgmt/", svcu, svcp, "ClearPass")
+            elif env == "OFS_F5_Lower":
+                f5 = BigIQClient("https://txppbigiq01.network.onefiserv.net/mgmt/", lowu, lowp, "TACACS+")
+            F5_MAIN(f5, tags, env)
+        elif "DELETE-ALL" in env:
+            vipdel = LB_VIP_DELETE(get_nb_keys())
+            vipdel.vip_delete()
     except Exception as err:
         log.error(f"{err}")
