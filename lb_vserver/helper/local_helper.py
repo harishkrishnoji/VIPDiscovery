@@ -45,7 +45,9 @@ def get_credentials():
     path = "loadbalancer_secrets"
     # vault_data = hashi_vault(token=token, path=path)
     vdata["path"] = path
+    log.info(vdata)
     vault_data = hashi_vault_rundeck(**vdata)
+    log.info(vault_data)
     svcp = vault_data["data"]["data"]["svc_acc"].get("password")
     svcu = vault_data["data"]["data"]["svc_acc"].get("username")
     lowu = vault_data["data"]["data"]["f5_lower"].get("username")
