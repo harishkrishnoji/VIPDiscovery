@@ -8,8 +8,6 @@ from helper.local_helper import get_nb_keys
 
 requests.urllib3.disable_warnings()
 
-token = os.environ.get("HASHI_TOKEN")
-
 
 # fmt: off
 class NBLogIn:
