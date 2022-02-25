@@ -13,6 +13,7 @@ from helper.local_helper import get_credentials, get_nb_keys
 
 env = os.environ.get("RD_OPTION_ENV")
 token = os.environ.get("HASHI_TOKEN")
+url = os.environ.get("RD_OPTION_NAUTOBOT_URL")
 
 if __name__ == "__main__":
     log.info(f"Environment {env}")
