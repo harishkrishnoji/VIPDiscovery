@@ -111,7 +111,7 @@ class LB_VIP(VIPT_ATTR):
             VIPT_ATTR.vip_attr.create(data)
         except pynautobot.core.query.RequestError:
             log.warning(
-                f"Duplicate VIP:Port [{self.vip_data.get('loadbalancer')}] {self.vip_data.get('address')}:{self.vip_data.get('port')}"
+                f"Duplicate VIP:Port [{self.vip_data.get('name')}] {self.vip_data.get('address')}:{self.vip_data.get('port')}"
             )
         except Exception as err:
             log.error(f"[Create][{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
