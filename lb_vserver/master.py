@@ -8,7 +8,7 @@ from helper.local_helper import log
 from citrix.citrix_main import CITIRIX_MAIN
 from f5.f5_main import F5_MAIN
 from nautobot.nautobot_vip_delete import LB_VIP_DELETE
-from helper.local_helper import get_credentials, get_nb_keys
+from helper.local_helper import get_credentials
 
 
 env = os.environ.get("RD_OPTION_ENV")
