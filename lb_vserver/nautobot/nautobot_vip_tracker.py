@@ -195,7 +195,7 @@ class LB_VIP(VIPT_ATTR):
                 else:
                     self.cert_issuer()
                     data["name"] = self.cert_info.get("cn")
-                    data["issuer"] = self.slug_parser(self.cert_info.get("cn"))
+                    data["slug"] = self.slug_parser(self.cert_info.get("cn"))
                     data["issuer"] = self.cert_issuer_uuid
                     try:
                         certificate = VIPT_ATTR.certificates_attr.create(data)
