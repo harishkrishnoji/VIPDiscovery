@@ -7,7 +7,7 @@ from helper.local_helper import log
 from helper.variables_lb import VIP_FIELDS
 from datetime import datetime
 from nautobot.nautobot_attr import VIPT_ATTR
-from nautobot.nautobot_filters import cert_filter, vip_port_filter
+from nautobot.nautobot_filters import cert_filter, vip_port_filter, cert_filter1
 
 
 class LB_VIP(VIPT_ATTR):
@@ -177,25 +177,26 @@ class LB_VIP(VIPT_ATTR):
             for cert in self.vip_data.get("cert"):
                 self.cert_parser(cert)
                 certificate = VIPT_ATTR.certificates_attr.get(slug=self.slug_parser(self.cert_info.get("cn")))
-                self.cert_info
-                self.cert_issuer()
+                if not certificate and len(self.cert_info.get("serial")) > 10:
+                    certificate = VIPT_ATTR.certificates_attr.get(serial_number=self.cert_info.get("serial"))
                 data = {
-                    "name": self.cert_info.get("cn"),
-                    "slug": self.slug_parser(self.cert_info.get("cn")),
                     "exp": self.cert_info.get("exp", "2000-01-01T00:00"),
                     "serial_number": self.cert_info.get("serial"),
-                    "issuer": self.cert_issuer_uuid,
                     "cert_type": "RSA",
                 }
                 if certificate:
                     try:
-                        if data.get("serial_number") and len(data.get("serial_number")) > 8:
+                        if cert_filter1(data, certificate):
                             certificate.update(data)
                     except Exception as err:
                         log.error(
                             f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {cert.get('cert_cn')} : {err}"
                         )
                 else:
+                    self.cert_issuer()
+                    data["name"] = self.cert_info.get("cn")
+                    data["issuer"] = self.slug_parser(self.cert_info.get("cn"))
+                    data["issuer"] = self.cert_issuer_uuid
                     try:
                         certificate = VIPT_ATTR.certificates_attr.create(data)
                     except Exception as err:
