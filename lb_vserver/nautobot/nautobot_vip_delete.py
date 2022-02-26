@@ -9,7 +9,8 @@ class LB_VIP_DELETE(VIPT_ATTR):
     """Initiate VIP Delete Class."""
 
     def vip_delete(self):
-        for vip in VIPT_ATTR.vip_attr.all():
+        vips = VIPT_ATTR.vip_attr.all()
+        for vip in vips:
             vip.delete()
         self.pool_delete()
         self.members_delete()
@@ -21,33 +22,41 @@ class LB_VIP_DELETE(VIPT_ATTR):
         self.organization_delete()
 
     def pool_delete(self):
-        for pool in VIPT_ATTR.pools_attr.all():
+        pools = VIPT_ATTR.pools_attr.all()
+        for pool in pools:
             pool.delete()
 
     def members_delete(self):
-        for member in VIPT_ATTR.members_attr.all():
+        members = VIPT_ATTR.members_attr.all()
+        for member in members:
             member.delete()
 
     def policies_delete(self):
-        for policy in VIPT_ATTR.policies_attr.all():
+        policies = VIPT_ATTR.policies_attr.all()
+        for policy in policies:
             policy.delete()
 
     def partitions_delete(self):
-        for partition in VIPT_ATTR.partitions_attr.all():
+        partitions = VIPT_ATTR.partitions_attr.all()
+        for partition in partitions:
             partition.delete()
 
     def certificates_delete(self):
-        for certificate in VIPT_ATTR.certificates_attr.all():
+        certificates = VIPT_ATTR.certificates_attr.all()
+        for certificate in certificates:
             certificate.delete()
 
     def environments_delete(self):
-        for environment in VIPT_ATTR.environments_attr.all():
+        environments = VIPT_ATTR.environments_attr.all()
+        for environment in environments:
             environment.delete()
 
     def issuer_delete(self):
-        for issuer in VIPT_ATTR.issuer_attr.all():
+        issuers = VIPT_ATTR.issuer_attr.all()
+        for issuer in issuers:
             issuer.delete()
 
     def organization_delete(self):
-        for organization in VIPT_ATTR.organization_attr.all():
+        organizations = VIPT_ATTR.organization_attr.all()
+        for organization in organizations:
             organization.delete()
