@@ -37,7 +37,7 @@ if __name__ == "__main__":
                 f5 = BigIQClient("https://txppbigiq01.network.onefiserv.net/mgmt/", lowu, lowp, "TACACS+")
             F5_MAIN(f5, tags, env)
         elif "DELETE-ALL" in env:
-            vipdel = LB_VIP_DELETE(get_nb_keys(nburl))
+            vipdel = LB_VIP_DELETE()
             vipdel.vip_delete()
     except Exception as err:
         log.error(f"{err}")
