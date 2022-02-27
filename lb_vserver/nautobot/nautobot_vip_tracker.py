@@ -177,7 +177,7 @@ class LB_VIP(VIPT_ATTR):
             for cert in self.vip_data.get("cert"):
                 self.cert_parser(cert)
                 certificate = VIPT_ATTR.certificates_attr.get(slug=self.slug_parser(self.cert_info.get("cn")))
-                if not certificate and len(self.cert_info.get("serial")) > 10:
+                if not certificate and self.cert_info.get("serial") and len(self.cert_info.get("serial")) > 10:
                     certificate = VIPT_ATTR.certificates_attr.get(serial_number=self.cert_info.get("serial"))
                 data = {
                     "exp": self.cert_info.get("exp", "2000-01-01T00:00"),
