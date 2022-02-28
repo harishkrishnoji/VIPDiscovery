@@ -13,7 +13,7 @@ from helper_fts.vault import hashi_vault_rundeck
 requests.packages.urllib3.disable_warnings()
 
 log = get_logger()
-# token = os.environ.get("HASHI_TOKEN")
+token = os.environ.get("HASHI_TOKEN")
 
 vdata = {
     "namespace": os.environ.get("VAULT_NAMESPACE"),
@@ -22,7 +22,16 @@ vdata = {
 }
 
 
-def uploadfile(fname):
+def uploadfile(sas_vip_info, env):
+    """Update VIP data on to remote server and Nautobot."""
+    filename = f"{env}.json"
+    with open(filename, "w+") as json_file:
+        json.dump(sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
+    resp = _uploadfile(filename)
+    return resp.strip()
+
+
+def _uploadfile(fname):
     """Upload file to remote server.
 
     Args:

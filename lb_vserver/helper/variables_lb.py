@@ -11,14 +11,7 @@ VIP_FIELDS = list(["address", "port", "loadbalancer", "name"])
 #   List of Devices to pull data from BIG-IQ / ADM Netscaler
 #########################################################################
 
-# F5_DEVICE_TO_QUERY = list(["ltm1.opensolutionsasp.com"])
-# F5_DEVICE_TO_QUERY = list(["jcdibedmzl03.network.onefiserv.net", "ltdbacbkel01.network.onefiserv.net", "jcdbusbkel01.network.onefiserv.net", "phdbkpl02.network.onefiserv.net", "lvpdcpxy03.onefiserv.net"])
-# F5_DEVICE_TO_QUERY = list(["phdbkpl02.network.onefiserv.net", "lvpdcpxy03.onefiserv.net"])
-# F5_DEVICE_TO_QUERY = list(["ltdcc3l05.network.onefiserv.net", "jcdibebkel02.network.onefiserv.net", "jcdem1l01.network.onefiserv.net", "jcddmzl03.fiserv.net", "jcdbacbkel02.network.onefiserv.net", "ltdcc1l02.network.onefiserv.net"])
-# F5_DEVICE_TO_QUERY = list(["jcddmzl03.fiserv.net", "jcdbacbkel02.network.onefiserv.net", "ltdcc1l02.network.onefiserv.net"])
-F5_DEVICE_TO_QUERY = list(["ltdcc1l04.network.onefiserv.net", "ltdbkpl02.network.onefiserv.net"])
-
-# NS_DEVICE_TO_QUERY = list(["INMUM1SLBSFM01B-C2", "ARBNA1SLBSFM01A-GRJLeg", "AUSYD2SLBINT01B-W1PL", "USOMA1SLBCRP01B"])
+F5_DEVICE_TO_QUERY = list(["jcdem1l01.network.onefiserv.net"])
 NS_DEVICE_TO_QUERY = list(["ARBNA1SLBSFM01A-W1R", "ARBNA2SLBSFM01B-C2", "ARBNA1SLBSFM01A-TESTLeg"])
 FILTER_VIP = list(["All"])
 # FILTER_VIP = list(["chh-dna-1206v-s"])

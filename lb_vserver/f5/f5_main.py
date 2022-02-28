@@ -4,8 +4,8 @@
 import sys
 import json
 import requests
-from helper.local_helper import log, uploadfile, getfile
-from f5.f5_filters import filter_device, filter_device1, filter_standalone
+from helper.local_helper import log, uploadfile
+from f5.f5_filters import filter_device, filter_device1, filter_standalone, nautobotday
 from helper.variables_lb import F5_DEVICE_FIELDS
 from nautobot.nautobot_main import NautobotClient
 from f5.f5_fun import F5HelperFun
@@ -43,21 +43,10 @@ class F5_MAIN:
                     if item["vips"]:
                         log.info(f"{item.get('hostname')}: [VIPs] {len(item['vips'])}")
                         self.sas_vip_info.extend(item["vips"])
-                        NautobotClient(item)
-        self.update_records()
+                        if nautobotday():
+                            NautobotClient(item)
+        log.info(uploadfile(self.sas_vip_info, self.env))
         log.info("Job done")
-
-    def update_records(self):
-        """Update VIP data on to remote server and Nautobot."""
-        filename = f"{self.env}.json"
-        with open(filename, "w+") as json_file:
-            json.dump(self.sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
-        oldfile = getfile(filename)
-        if oldfile:
-            with open(f"{filename}-old", "w+") as json_file:
-                json.dump(oldfile, json_file, indent=4, separators=(",", ": "), sort_keys=True)
-        resp = uploadfile(filename)
-        log.info(resp.strip())
 
     def device_list(self):
         """Get list of all devices from BIG-IQ."""

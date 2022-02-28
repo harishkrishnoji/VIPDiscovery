@@ -12,7 +12,6 @@ from helper.local_helper import get_credentials
 
 
 env = os.environ.get("RD_OPTION_ENV")
-# token = os.environ.get("HASHI_TOKEN")
 nburl = os.environ.get("RD_OPTION_NAUTOBOT_URL")
 
 if __name__ == "__main__":
@@ -21,10 +20,7 @@ if __name__ == "__main__":
     try:
         if "Netscaler" in env:
             adm = ADMClient("https://adc.1dc.com/nitro/v1/", svcu, svcp)
-            if env == "OFD_Netscaler":
-                tags = ["ofd"]
-            elif env == "OFS_Netscaler":
-                tags = ["ofs"]
+            tags = ["ofd"] if env == "OFD_Netscaler" else ["ofs"]
             CITIRIX_MAIN(adm, tags, env)
         elif "F5" in env:
             tags = ["ofs"]

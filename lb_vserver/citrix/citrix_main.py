@@ -4,10 +4,10 @@
 import json
 import sys
 from citrix.citrix_fun import CITIRIX_FUN
-from helper.local_helper import log, uploadfile, getfile
+from helper.local_helper import log, uploadfile
 from helper.variables_lb import NS_DEVICE_FIELDS
 from nautobot.nautobot_main import NautobotClient
-from citrix.citrix_filters import filter_device, filter_vip
+from citrix.citrix_filters import filter_device, filter_vip, nautobotday
 
 
 class CITIRIX_MAIN:
@@ -38,21 +38,10 @@ class CITIRIX_MAIN:
                 device["vips"] = self.gather_vip_info(device)
                 if device.get("vips"):
                     self.sas_vip_info.extend(device.get("vips"))
-                    NautobotClient(device)
-        self.update_records()
+                    if nautobotday():
+                        NautobotClient(device)
+        log.info(uploadfile(self.sas_vip_info, self.env))
         log.info("Job done")
-
-    def update_records(self):
-        """Update VIP data on to remote server and Nautobot."""
-        filename = f"{self.env}.json"
-        with open(filename, "w+") as json_file:
-            json.dump(self.sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
-        oldfile = getfile(filename)
-        if oldfile:
-            with open(f"{filename}-old", "w+") as json_file:
-                json.dump(oldfile, json_file, indent=4, separators=(",", ": "), sort_keys=True)
-        resp = uploadfile(filename)
-        log.info(resp.strip())
 
     def ns_device_lst(self):
         """Get device list function."""
