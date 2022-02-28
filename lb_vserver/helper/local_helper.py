@@ -13,6 +13,7 @@ from helper_fts.vault import hashi_vault_rundeck
 requests.packages.urllib3.disable_warnings()
 
 log = get_logger()
+# token = os.environ.get("HASHI_TOKEN")
 
 vdata = {
     "namespace": os.environ.get("VAULT_NAMESPACE"),
@@ -54,8 +55,9 @@ def get_credentials():
 
 
 def get_nb_keys(nburl):
+    path = "nautobot"
     # vault_data = hashi_vault(token=token, path=path)
-    vdata["path"] = "nautobot"
+    vdata["path"] = path
     vault_data = hashi_vault_rundeck(**vdata)
     if "-cat" in nburl.lower():
         return vault_data["data"]["data"]["keys"].get("cat")

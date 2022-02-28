@@ -84,7 +84,7 @@ class LB_VIP(VIPT_ATTR):
                     for mem in vip["pool"].get("members"):
                         if mem["address"].get("address").split("/")[0] not in str(self.vip_data.get("pool_mem")):
                             self.pool()
-                    if self.vip_data.get("cert"):
+                    if self.vip_data.get("cert") and len(self.vip_data.get("cert")) < 5:
                         for cert in self.vip_data.get("cert"):
                             try:
                                 if cert_filter(cert, vip):

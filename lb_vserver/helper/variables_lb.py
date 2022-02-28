@@ -12,7 +12,7 @@ VIP_FIELDS = list(["address", "port", "loadbalancer", "name"])
 #########################################################################
 
 # F5_DEVICE_TO_QUERY = list(["ltm1.opensolutionsasp.com"])
-F5_DEVICE_TO_QUERY = list(["INBOM1ASMINT01A.1dc.com"])
+F5_DEVICE_TO_QUERY = list(["lxpdcpxy01.onefiserv.net"])
 NS_DEVICE_TO_QUERY = list(["USOMA1SLBSFD01A", "USOMA1SLBSFD01B"])
 FILTER_VIP = list(["All"])
 # FILTER_VIP = list(["chh-dna-1206v-s"])
