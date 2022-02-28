@@ -2,12 +2,11 @@
 """Nautobot REST API SDK."""
 
 import pynautobot
-from random import randint
 from helper.local_helper import log
 from helper.variables_lb import VIP_FIELDS
 from datetime import datetime
 from nautobot.nautobot_attr import VIPT_ATTR
-from nautobot.nautobot_filters import cert_filter, vip_port_filter, cert_filter1
+from nautobot.nautobot_filters import cert_filter, vip_port_filter, cert_filter1, cert_serial
 
 
 class LB_VIP(VIPT_ATTR):
@@ -110,9 +109,10 @@ class LB_VIP(VIPT_ATTR):
         try:
             VIPT_ATTR.vip_attr.create(data)
         except pynautobot.core.query.RequestError:
-            log.warning(
-                f"Duplicate VIP:Port [{self.vip_data.get('name')}] {self.vip_data.get('address')}:{self.vip_data.get('port')}"
-            )
+            pass
+            # log.warning(
+            # f"Duplicate VIP:Port [{self.vip_data.get('name')}] {self.vip_data.get('address')}:{self.vip_data.get('port')}"
+            # )
         except Exception as err:
             log.error(f"[Create][{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
 
@@ -223,7 +223,8 @@ class LB_VIP(VIPT_ATTR):
             cert_data (dict): Cert Info
         """
         log.debug(f"[Cert] Before Parser : {cert_data}")
-        cert = {"serial": randint(100, 2000) if not cert_data.get("cert_serial") else cert_data.get("cert_serial")}
+        # cert = {"serial": randint(100, 2000) if not cert_data.get("cert_serial") else cert_data.get("cert_serial")}
+        cert = cert_serial(cert_data)
         cert["cn"] = cert_data.get("cert_cn", "").split("/")[0].split(",")[0]
         if cert_data.get("cert_issuer"):
             cert["issuer"] = {}
