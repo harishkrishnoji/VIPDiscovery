@@ -114,9 +114,9 @@ class F5HelperFun:
                         if "clientside" in i["context"] and self.ssl_profile.get(i["name"]):
                             vip_info["cert"].append(self.ssl_profile.get(i["name"]))
                 if not vip_info.get("advanced_policies"):
-                    vip_info.pop("advanced_policies")
+                    vip_info.pop("advanced_policies", None)
                 if not vip_info.get("cert"):
-                    vip_info.pop("cert")
+                    vip_info.pop("cert", None)
                 return vip_info
 
     def vip_add_port_parser(self, vip):
