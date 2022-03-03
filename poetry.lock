@@ -268,6 +268,25 @@ url = "https://nexus-appdev.1dc.com/repository/pypi-group/simple"
 reference = "nexus"
 
 [[package]]
+name = "deepdiff"
+version = "5.7.0"
+description = "Deep Difference and Search of any Python object/data."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+ordered-set = "4.0.2"
+
+[package.extras]
+cli = ["click (==8.0.3)", "pyyaml (==5.4.1)", "toml (==0.10.2)", "clevercsv (==0.7.1)"]
+
+[package.source]
+type = "legacy"
+url = "https://nexus-appdev.1dc.com/repository/pypi-group/simple"
+reference = "nexus"
+
+[[package]]
 name = "f5-bigiq"
 version = "0.0.4"
 description = "F5 BigIQ Management SDK"
@@ -447,6 +466,19 @@ name = "more-itertools"
 version = "8.12.0"
 description = "More routines for operating on iterables, beyond itertools"
 category = "dev"
+optional = false
+python-versions = ">=3.5"
+
+[package.source]
+type = "legacy"
+url = "https://nexus-appdev.1dc.com/repository/pypi-group/simple"
+reference = "nexus"
+
+[[package]]
+name = "ordered-set"
+version = "4.0.2"
+description = "A set that remembers its order, and allows looking up its items by their index in that order."
+category = "main"
 optional = false
 python-versions = ">=3.5"
 
@@ -1040,7 +1072,7 @@ reference = "nexus"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "c77181d6695d9e9533fe1564bd812fee7db7c86faa512acec353002bebc4aabe"
+content-hash = "6fc40ac861ea9f39460eb46409e0c5e2f643b00e9ec5bfdb4aad92d8d8ad47b3"
 
 [metadata.files]
 appdirs = [
@@ -1151,6 +1183,10 @@ datetime = [
     {file = "DateTime-4.3-py2.py3-none-any.whl", hash = "sha256:371dba07417b929a4fa685c2f7a3eaa6a62d60c02947831f97d4df9a9e70dfd0"},
     {file = "DateTime-4.3.tar.gz", hash = "sha256:5cef605bab8259ff61281762cdf3290e459fbf0b4719951d5fab967d5f2ea0ea"},
 ]
+deepdiff = [
+    {file = "deepdiff-5.7.0-py3-none-any.whl", hash = "sha256:1ffb38c3b5d9174eb2df95850c93aee55ec00e19396925036a2e680f725079e0"},
+    {file = "deepdiff-5.7.0.tar.gz", hash = "sha256:838766484e323dcd9dec6955926a893a83767dc3f3f94542773e6aa096efe5d4"},
+]
 f5-bigiq = [
     {file = "f5-bigiq-0.0.4.tar.gz", hash = "sha256:4375120d781fb3599d04e36cff7ed4d095bc2d1c678e160ef815e31b068a252d"},
     {file = "f5_bigiq-0.0.4-py3-none-any.whl", hash = "sha256:14064ff99bb3f3dd5d3e3bebcace96b1cfbd48834b9dc48b5a5a49445d561b84"},
@@ -1234,6 +1270,9 @@ mccabe = [
 more-itertools = [
     {file = "more-itertools-8.12.0.tar.gz", hash = "sha256:7dc6ad46f05f545f900dd59e8dfb4e84a4827b97b3cfecb175ea0c7d247f6064"},
     {file = "more_itertools-8.12.0-py3-none-any.whl", hash = "sha256:43e6dd9942dffd72661a2c4ef383ad7da1e6a3e968a927ad7a6083ab410a688b"},
+]
+ordered-set = [
+    {file = "ordered-set-4.0.2.tar.gz", hash = "sha256:ba93b2df055bca202116ec44b9bead3df33ea63a7d5827ff8e16738b97f33a95"},
 ]
 packaging = [
     {file = "packaging-21.3-py3-none-any.whl", hash = "sha256:ef103e05f519cdc783ae24ea4e2e0f508a9c99b2d4969652eed6a2e1ea5bd522"},

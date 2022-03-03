@@ -5,15 +5,17 @@ import os
 import json
 import requests
 from helper_fts.logger import get_logger
-from helper_fts.vault import hashi_vault_rundeck
+from helper.gitlab_helper import GitLab_Client
+# from helper_fts.vault import hashi_vault_rundeck
 
-# from helper_fts.vault import hashi_vault
+from helper_fts.vault import hashi_vault
 
 
 requests.packages.urllib3.disable_warnings()
 
 log = get_logger()
 token = os.environ.get("HASHI_TOKEN")
+glab = GitLab_Client()
 
 vdata = {
     "namespace": os.environ.get("VAULT_NAMESPACE"),
@@ -28,7 +30,13 @@ def uploadfile(sas_vip_info, env):
     with open(filename, "w+") as json_file:
         json.dump(sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
     resp = _uploadfile(filename)
+    gitUpload(filename, env)
     return resp.strip()
+
+
+def gitUpload(filename, env):
+    glab.filepath = f"lb-vip/{env}.json"
+    glab.update_file(filename)
 
 
 def _uploadfile(fname):
@@ -53,9 +61,9 @@ def getfile(fname=""):
 
 def get_credentials():
     path = "loadbalancer_secrets"
-    # vault_data = hashi_vault(token=token, path=path)
-    vdata["path"] = path
-    vault_data = hashi_vault_rundeck(**vdata)
+    vault_data = hashi_vault(token=token, path=path)
+    # vdata["path"] = path
+    # vault_data = hashi_vault_rundeck(**vdata)
     svcp = vault_data["data"]["data"]["svc_acc"].get("password")
     svcu = vault_data["data"]["data"]["svc_acc"].get("username")
     lowu = vault_data["data"]["data"]["f5_lower"].get("username")
@@ -65,9 +73,17 @@ def get_credentials():
 
 def get_nb_keys(nburl):
     path = "nautobot"
-    # vault_data = hashi_vault(token=token, path=path)
-    vdata["path"] = path
-    vault_data = hashi_vault_rundeck(**vdata)
+    vault_data = hashi_vault(token=token, path=path)
+    # vdata["path"] = path
+    # vault_data = hashi_vault_rundeck(**vdata)
     if "-cat" in nburl.lower():
         return vault_data["data"]["data"]["keys"].get("cat")
     return vault_data["data"]["data"]["keys"].get("prod")
+
+
+def get_git_keys():
+    path = "gitlab"
+    vault_data = hashi_vault(token=token, path=path)
+    # vdata["path"] = path
+    # vault_data = hashi_vault_rundeck(**vdata)
+    return vault_data["data"]["data"].get("fts_sane_wr")

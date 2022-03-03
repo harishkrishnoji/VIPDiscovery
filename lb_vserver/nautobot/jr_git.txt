@@ -1,0 +1,4 @@
+https://git-enterprise-jc.onefiserv.net/rundeck/rundeck_doc_automation/-/blob/master/rundeck_doc_automation/auto_doc.py
+https://git-enterprise-jc.onefiserv.net/vault/vault_upgrade_automation/-/blob/master/roles/vault/tasks/put_inventory_json_file.yml
+https://git-enterprise-jc.onefiserv.net/ntc/configuration-management/-/blob/master/pb.device-backups.yml#L114
+https://git-enterprise-jc.onefiserv.net/ntc/fiserv-network-collection/-/blob/master/plugins/action/template_ntc.py
