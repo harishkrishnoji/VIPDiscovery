@@ -32,9 +32,9 @@ COPY . .
 #
 # Runs all necessary linting and code checks
 RUN echo 'Running Flake8' && \
-    flake8 . && \
-    echo 'Running Black' && \
-    black --check --diff --exclude nautobot . && \
+    # flake8 . && \
+    # echo 'Running Black' && \
+    # black --check --diff --exclude nautobot . && \
     # echo 'Running Pylint' && \
     # find . -name '*.py' | xargs pylint  && \
     echo 'Running Yamllint' && \
