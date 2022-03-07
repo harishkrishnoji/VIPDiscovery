@@ -12,7 +12,7 @@ def cert_filter(cert, vip):
 
 def vip_port_filter(vip, vip_data):
     if (
-        (vip_data.get("port") == str(vip.get("port")) and vip_data.get("protocol") == vip.get("protocol"))
+        (str(vip_data.get("port")) == str(vip.get("port")) and vip_data.get("protocol") == vip.get("protocol"))
         and (vip_data.get("pool_mem"))
     ):
         return True

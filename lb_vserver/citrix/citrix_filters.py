@@ -1,11 +1,14 @@
 import os
+import json
 from datetime import datetime
-from helper.variables_lb import DISREGARD_VIP, DISREGARD_LB_CITRIX, FILTER_VIP
+from helper.variables_lb import DISREGARD_VIP, DISREGARD_LB_CITRIX, FILTER_VIP, NS_DEVICE_TO_QUERY
 from nautobot.nautobot_main import NautobotClient
-from helper.local_helper import glab
+from helper.local_helper import glab, log
 from deepdiff import DeepDiff
 
-NS_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+# NS_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+# ovips = glab.get_file()
+ovips = json.loads(glab.get_file().decode())
 
 
 def filter_device(device, ENV):
@@ -37,39 +40,35 @@ def filter_vip(vs_name):
 
 
 def nautobotday():
-    days = [0, 2]
-    if NS_DEVICE_TO_QUERY == "All" and datetime.today().weekday() in days:
+    days = [0, 2, 6]
+    # if NS_DEVICE_TO_QUERY == "All" and datetime.today().weekday() in days:
+    if datetime.today().weekday() in days:
         return True
 
 
-def update_nautobot(devices, env):
+def update_nautobot(device, env):
     if nautobotday():
-        glab.filepath = f"lb-vip/{env}.json"
-        ofile = glab.get_file()
-        for device in devices:
-            if device.get("vips"):
-                dev = diffObject(ofile, device)
-                NautobotClient(dev)
-                # for vip in device.get("vips"):
+        dev = diffObject(device)
+        NautobotClient(dev)
                     
                     
-def diffObject(ofile, device):
-    device_data = device.copy()
-    vips = device.get("vips")
-    print(len(vips))
-    for of in ofile:
-        for i, vip in enumerate(vips):
-            if vip == of:
-                del(vips[i])
-
-'''
-a = [1,23,4,5,6,7,4,2,1,45]
-b = [2,3,4,5,6,7,8,9,45,23]
-for ai1, ai in enumerate(a):
-    for bi1, bi in enumerate(b):
-        if ai == bi:
-            print(str(ai), str(bi))
-            print(str(ai1), str(bi1))
-            del(a[ai1])
-
-'''
+def diffObject(device):
+    nvips = device.get("vips")
+    newdev = device.copy()
+    newdev["vips"] = []
+    log.info(f"New VIPs count : {len(nvips)}")
+    log.info(f"Old VIPs count : {len(ovips)}")
+    for nd in nvips:
+        newvip = True
+        for od in ovips:
+            if (
+                (od.get("port") == nd.get("port")) and od.get("protocol") == nd.get("protocol")
+                and (od.get("address") == nd.get("address")) and (od.get("name") == nd.get("name"))
+                and (od.get("pool") == nd.get("pool")) and (od.get("environment") == nd.get("environment"))
+            ):
+                if not DeepDiff(od, nd, ignore_order=True, exclude_paths=["root['loadbalancer']"]):
+                    newvip = False
+        if newvip:
+            newdev["vips"].append(nd)
+    log.info(f"After filter VIPs count : {len(newdev['vips'])}")
+    return newdev

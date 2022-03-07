@@ -1,13 +1,12 @@
 import gitlab
-from helper.local_helper import get_git_keys
-
-token = get_git_keys()
+# from helper.local_helper import get_git_keys
+# token = get_git_keys()
 
 
 class GitLab_Client:
     """Initial GitLab Client."""
 
-    def __init__(self, filepath="", project_id="4504", branch="master", token=token) -> None:
+    def __init__(self, filepath="", project_id="4504", branch="master", token="") -> None:
         self.url = "https://git-enterprise-jc.onefiserv.net"
         self.project_id = project_id
         self.branch = branch
@@ -29,7 +28,12 @@ class GitLab_Client:
             with open(lfilepath, "r") as my_file:
                 file_content = my_file.read()
             file.content = file_content
-            resp = file.save(branch=self.branch, commit_message=f"Update {self.filepath}")
+            resp = file.save(
+                branch=self.branch,
+                commit_message=f"Update {self.filepath}",
+                author_email= "harish.krishnoji@fiserv.com",
+                author_name= "Harish Krishnoji",
+            )
             return resp
         else:
             self.create_file(lfilepath)

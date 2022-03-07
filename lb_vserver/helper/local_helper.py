@@ -15,13 +15,26 @@ requests.packages.urllib3.disable_warnings()
 
 log = get_logger()
 token = os.environ.get("HASHI_TOKEN")
-glab = GitLab_Client()
+env = os.environ.get("RD_OPTION_ENV")
+
 
 vdata = {
     "namespace": os.environ.get("VAULT_NAMESPACE"),
     "role_id": os.environ.get("VAULT_ROLE_ID"),
     "secret_id": os.environ.get("VAULT_SECRET_ID"),
 }
+
+
+def get_git_keys():
+    path = "gitlab"
+    vault_data = hashi_vault(token=token, path=path)
+    # vdata["path"] = path
+    # vault_data = hashi_vault_rundeck(**vdata)
+    return vault_data["data"]["data"]["access_token"].get("sane_backups")
+
+
+git_token = get_git_keys()
+glab = GitLab_Client(token=git_token, filepath=f"lb-vip/{env}.json")
 
 
 def uploadfile(sas_vip_info, env):
@@ -79,11 +92,3 @@ def get_nb_keys(nburl):
     if "-cat" in nburl.lower():
         return vault_data["data"]["data"]["keys"].get("cat")
     return vault_data["data"]["data"]["keys"].get("prod")
-
-
-def get_git_keys():
-    path = "gitlab"
-    vault_data = hashi_vault(token=token, path=path)
-    # vdata["path"] = path
-    # vault_data = hashi_vault_rundeck(**vdata)
-    return vault_data["data"]["data"].get("fts_sane_wr")

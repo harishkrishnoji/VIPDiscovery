@@ -38,11 +38,8 @@ class CITIRIX_MAIN:
                 device["vips"] = self.gather_vip_info(device)
                 if device.get("vips"):
                     self.sas_vip_info.extend(device.get("vips"))
-                    # update_nautobot(device)
-                    # if nautobotday():
-                    #     NautobotClient(device)
+                    # update_nautobot(device, self.env)
         log.info(uploadfile(self.sas_vip_info, self.env))
-        update_nautobot(device, self.env)
         log.info("Job done")
 
     def ns_device_lst(self):
