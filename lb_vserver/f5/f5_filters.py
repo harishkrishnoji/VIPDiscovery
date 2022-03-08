@@ -28,7 +28,7 @@ def filter_vips(addr, vip):
 
 
 def nautobotday():
-    days = [0, 2]
+    days = [0, 1, 2]
     # if F5_DEVICE_TO_QUERY == "All" and datetime.today().weekday() in days:
     if datetime.today().weekday() in days:
         return True

@@ -34,6 +34,6 @@ def filter_vip(vs_name):
 
 
 def nautobotday():
-    days = [0, 2]
+    days = [0, 1, 2]
     if NS_DEVICE_TO_QUERY == "All" and datetime.today().weekday() in days:
         return True
