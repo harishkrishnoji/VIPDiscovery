@@ -1,5 +1,4 @@
 import os
-from datetime import datetime
 from helper.variables_lb import DISREGARD_LB_F5, F5_STANDALONE, DISREGARD_VIP, FILTER_VIP
 
 F5_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
@@ -24,11 +23,4 @@ def filter_standalone(item):
 
 def filter_vips(addr, vip):
     if addr not in DISREGARD_VIP and vip.get("pool") and ("All" in FILTER_VIP or vip.get("name") in FILTER_VIP):
-        return True
-
-
-def nautobotday():
-    days = [0, 2]
-    # if F5_DEVICE_TO_QUERY == "All" and datetime.today().weekday() in days:
-    if datetime.today().weekday() in days:
         return True

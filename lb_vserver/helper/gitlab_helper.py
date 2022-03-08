@@ -1,6 +1,4 @@
 import gitlab
-# from helper.local_helper import get_git_keys
-# token = get_git_keys()
 
 
 class GitLab_Client:
@@ -31,8 +29,8 @@ class GitLab_Client:
             resp = file.save(
                 branch=self.branch,
                 commit_message=f"Update {self.filepath}",
-                author_email= "harish.krishnoji@fiserv.com",
-                author_name= "Harish Krishnoji",
+                author_email="harish.krishnoji@fiserv.com",
+                author_name="Harish Krishnoji",
             )
             return resp
         else:

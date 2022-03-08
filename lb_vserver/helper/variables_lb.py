@@ -11,7 +11,7 @@ VIP_FIELDS = list(["address", "port", "loadbalancer", "name"])
 #   List of Devices to pull data from BIG-IQ / ADM Netscaler
 #########################################################################
 
-F5_DEVICE_TO_QUERY = list(["jcdem1l01.network.onefiserv.net"])
+F5_DEVICE_TO_QUERY = list(["All"])
 NS_DEVICE_TO_QUERY = list(["All"])
 FILTER_VIP = list(["All"])
 # FILTER_VIP = list(["chh-dna-1206v-s"])

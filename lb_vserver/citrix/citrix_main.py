@@ -4,10 +4,9 @@
 import json
 import sys
 from citrix.citrix_fun import CITIRIX_FUN
-from helper.local_helper import log, uploadfile
+from helper.local_helper import log, uploadfile, update_nautobot
 from helper.variables_lb import NS_DEVICE_FIELDS
-# from nautobot.nautobot_main import NautobotClient
-from citrix.citrix_filters import filter_device, filter_vip, update_nautobot
+from citrix.citrix_filters import filter_device, filter_vip
 
 
 class CITIRIX_MAIN:
@@ -38,7 +37,7 @@ class CITIRIX_MAIN:
                 device["vips"] = self.gather_vip_info(device)
                 if device.get("vips"):
                     self.sas_vip_info.extend(device.get("vips"))
-                    # update_nautobot(device, self.env)
+                    update_nautobot(device)
         log.info(uploadfile(self.sas_vip_info, self.env))
         log.info("Job done")
 
