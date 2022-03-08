@@ -40,7 +40,7 @@ RUN echo 'Running Flake8' && \
     echo 'Running Yamllint' && \
     yamllint . && \
     echo 'Running pydocstyle' && \
-    # pydocstyle . && \
+    pydocstyle . && \
     echo 'Running Bandit' && \
     bandit --recursive ./ --configfile .bandit.yml
 

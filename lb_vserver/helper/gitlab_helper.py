@@ -1,3 +1,5 @@
+"""GitLab Client."""
+
 import gitlab
 
 
@@ -5,6 +7,7 @@ class GitLab_Client:
     """Initial GitLab Client."""
 
     def __init__(self, filepath="", project_id="4504", branch="master", token="") -> None:
+        """Initialize."""
         self.url = "https://git-enterprise-jc.onefiserv.net"
         self.project_id = project_id
         self.branch = branch
@@ -15,12 +18,14 @@ class GitLab_Client:
         self.proj_tree = self.proj.repository_tree()
 
     def get_file(self):
+        """Get File."""
         try:
             return self.proj.files.get(file_path=self.filepath, ref=self.branch)
         except gitlab.exceptions.GitlabGetError:
             pass
 
     def update_file(self, lfilepath):
+        """Update File."""
         file = self.get_file()
         if file:
             with open(lfilepath, "r") as my_file:
@@ -37,9 +42,11 @@ class GitLab_Client:
             self.create_file(lfilepath)
 
     def delete_file(self):
+        """Delete File."""
         return self.proj.delete(commit_message=f"Delete {self.filepath}", branch=self.branch)
 
     def create_file(self, lfilepath):
+        """Create new file."""
         with open(lfilepath, "r") as my_file:
             file_content = my_file.read()
         resp = self.proj.files.create(

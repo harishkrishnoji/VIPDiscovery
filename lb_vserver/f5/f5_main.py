@@ -4,7 +4,8 @@
 import sys
 import json
 import requests
-from helper.local_helper import log, uploadfile, update_nautobot
+from helper import log
+from helper.local_helper import uploadFile, nautobotUpdate
 from f5.f5_filters import filter_device, filter_device1, filter_standalone
 from helper.variables_lb import F5_DEVICE_FIELDS
 from f5.f5_fun import F5HelperFun
@@ -42,8 +43,8 @@ class F5_MAIN:
                     if item["vips"]:
                         log.info(f"{item.get('hostname')}: [VIPs] {len(item['vips'])}")
                         self.sas_vip_info.extend(item["vips"])
-                        update_nautobot(item)
-        log.info(uploadfile(self.sas_vip_info, self.env))
+                        nautobotUpdate(item)
+        uploadFile(self.sas_vip_info)
         log.info("Job done")
 
     def device_list(self):

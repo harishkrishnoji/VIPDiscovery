@@ -3,7 +3,7 @@
 
 from nautobot.nautobot_device import NB_Device
 from nautobot.nautobot_vip_tracker import LB_VIP
-from helper.local_helper import log
+from helper import log
 
 
 def NautobotClient(lb_data):

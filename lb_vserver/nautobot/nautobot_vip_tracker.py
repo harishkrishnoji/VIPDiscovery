@@ -2,7 +2,7 @@
 """Nautobot REST API SDK."""
 
 import pynautobot
-from helper.local_helper import log
+from helper import log
 from helper.variables_lb import VIP_FIELDS
 from datetime import datetime
 from nautobot.nautobot_attr import VIPT_ATTR
@@ -73,6 +73,7 @@ class LB_VIP(VIPT_ATTR):
             )
 
     def validate_update(self):
+        """Validate if VIP already exist in Nautobot."""
         variables = {"vip": self.vip_data.get("name")}
         self.vip_addr_uuid
         resp = VIPT_ATTR.nb.graphql.query(query=self.vip_query, variables=variables).json
@@ -309,11 +310,13 @@ class LB_VIP(VIPT_ATTR):
             self.pool_error()
 
     def pool_exist_by_name(self, name):
+        """Check for Pool by name."""
         pools = VIPT_ATTR.pools_attr.get(slug=self.slug_parser(name))
         if pools:
             return pools
 
     def pool_exist_by_addr(self, addr_uuid, name=""):
+        """Check for Pool by Member UUID."""
         try:
             pool_lst = VIPT_ATTR.pools_attr.filter(members=addr_uuid)
             if name:
@@ -325,6 +328,7 @@ class LB_VIP(VIPT_ATTR):
             pass
 
     def pool_error(self):
+        """Default Pool."""
         pool_name = "pool_error"
         mem_addr_uuid = self.ipam_address("1.1.1.1")
         pools = self.pool_exist_by_addr(mem_addr_uuid)

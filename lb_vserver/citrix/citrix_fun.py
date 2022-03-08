@@ -3,7 +3,7 @@
 
 import json
 import sys
-from helper.local_helper import log
+from helper import log
 
 
 class CITIRIX_FUN:
