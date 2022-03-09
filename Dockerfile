@@ -2,7 +2,7 @@
 # Dependencies
 #
 ARG PYTHON_VER=3.8
-FROM python:${PYTHON_VER} AS base
+FROM l3pvap1561.1dc.com:8083/library/python:${PYTHON_VER} AS base
 
 WORKDIR /usr/src/app
 
@@ -54,7 +54,7 @@ CMD ["--color=yes", "-vvv"]
 # Final image
 #
 # This creates a runnable CLI container
-FROM python:3.8-slim AS cli
+FROM l3pvap1561.1dc.com:8083/library/python:3.8-slim AS cli
 
 WORKDIR /usr/src/app
 
