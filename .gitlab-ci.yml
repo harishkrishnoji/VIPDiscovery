@@ -1,6 +1,5 @@
 ---
 stages:
-  # - test
   - publish
   - master
   - clean
