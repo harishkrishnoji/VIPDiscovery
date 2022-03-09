@@ -7,7 +7,8 @@ FROM l3pvap1561.1dc.com:8083/library/python:${PYTHON_VER} AS base
 WORKDIR /usr/src/app
 
 # Install poetry for dep management
-RUN pip install poetry
+# RUN pip install poetry
+RUN pip install l3pvap1561.1dc.com:8083/packages/poetry/1.1.12/poetry-1.1.12-py2.py3-none-any.whl
 RUN poetry config virtualenvs.create false
 
 # Install project manifest
