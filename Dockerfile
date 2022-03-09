@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 
 # Install poetry for dep management
 # RUN pip install poetry
-RUN pip install l3pvap1561.1dc.com:8083/packages/poetry/1.1.12/poetry-1.1.12-py2.py3-none-any.whl
+RUN pip install --index-url https://nexus-appdev.1dc.com/repository/pypi-group/simple poetry
 RUN poetry config virtualenvs.create false
 
 # Install project manifest
