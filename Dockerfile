@@ -2,12 +2,13 @@
 # Dependencies
 #
 ARG PYTHON_VER=3.8
-FROM python:${PYTHON_VER} AS base
+FROM l3pvap1561.1dc.com:8083/library/python:${PYTHON_VER} AS base
 
 WORKDIR /usr/src/app
 
 # Install poetry for dep management
-RUN pip install poetry
+# RUN pip install poetry
+RUN pip install --index-url https://nexus-appdev.1dc.com/repository/pypi-group/simple poetry
 RUN poetry config virtualenvs.create false
 
 # Install project manifest
@@ -54,7 +55,7 @@ CMD ["--color=yes", "-vvv"]
 # Final image
 #
 # This creates a runnable CLI container
-FROM python:3.8-slim AS cli
+FROM l3pvap1561.1dc.com:8083/library/python:3.8-slim AS cli
 
 WORKDIR /usr/src/app
 
