@@ -1,26 +1,31 @@
+"""F5 filter functions."""
+
 import os
 from helper.variables_lb import DISREGARD_LB_F5, F5_STANDALONE, DISREGARD_VIP, FILTER_VIP
-
-F5_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+from helper import deviceToQuery
 
 
 def filter_device(device):
-    if "All" in F5_DEVICE_TO_QUERY or device["hostname"] in F5_DEVICE_TO_QUERY:
+    """Device filter."""
+    if "All" in deviceToQuery or device["hostname"] in deviceToQuery:
         return True
 
 
 def filter_device1(item):
+    """Device filter."""
     for i in enumerate(DISREGARD_LB_F5):
         if DISREGARD_LB_F5[i[0]] in item["hostname"]:
             return True
 
 
 def filter_standalone(item):
+    """Device filter."""
     for i in enumerate(F5_STANDALONE):
         if F5_STANDALONE[i[0]] in item["hostname"]:
             return True
 
 
 def filter_vips(addr, vip):
+    """VIP filters."""
     if addr not in DISREGARD_VIP and vip.get("pool") and ("All" in FILTER_VIP or vip.get("name") in FILTER_VIP):
         return True

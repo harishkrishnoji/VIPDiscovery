@@ -6,16 +6,7 @@
 #########################################################################
 
 VIP_FIELDS = list(["address", "port", "loadbalancer", "name"])
-
-#########################################################################
-#   List of Devices to pull data from BIG-IQ / ADM Netscaler
-#########################################################################
-
-# F5_DEVICE_TO_QUERY = list(["ltm1.opensolutionsasp.com"])
-F5_DEVICE_TO_QUERY = list(["INBOM1ASMINT01A.1dc.com"])
-NS_DEVICE_TO_QUERY = list(["USOMA1SLBSFD01A", "USOMA1SLBSFD01B"])
 FILTER_VIP = list(["All"])
-# FILTER_VIP = list(["chh-dna-1206v-s"])
 
 #########################################################################
 #   List of Keys/values which need to be collected from BIG-IQ / ADM Netscaler
@@ -75,31 +66,7 @@ DISREGARD_LB_F5 = list(
         "SLBAPP3",  # Cluster mode SLBAPP1, SLBAPP2, SLBAPP2
         "SLBAPP1",  # Cluster mode SLBAPP1, SLBAPP2, SLBAPP2
         "localhost",
-        # OFS Devices
-        # "ecdbkel02-guest02",  # ERROR DEVICES
-        # "ecdbkel01-guest02",  # ERROR DEVICES
-        # "ecdbkel02-guest02.network.onefiserv.net",  # ERROR DEVICES
-        # "ecddmzl02-guest02.network.onefiserv.net",  # ERROR DEVICES
-        # "ecdbkel02.network.onefiserv.net",  # ERROR DEVICES
-        # "ecdbkel01-guest02.network.onefiserv.net",  # ERROR DEVICES
-        # "elidpxy03.onefiserv.net",  # ERROR DEVICES
-        # "USIRT01SLBLWR01B.network.onefiserv.net",  # ERROR DEVICES
-        # "ecddmzg02.fiserv.net",  # ERROR DEVICES
-        # "ecddmz01-guest02.network.onefiserv.net",  # ERROR DEVICES
-        # "elidpxy04.onefiserv.net",  # ERROR DEVICES
-        # "jxpdapxy02.onefiserv.net",  # ERROR DEVICES
     ]
 )
 
-DISREGARD_LB_CITRIX = [
-    # "INCHE1SLBINT03b",
-    # "AUSYD1SLBSFM01B-D2NR",
-    # "DEFRA2SLBPCF01B-SDX",
-    # "AUSYD2SLBSFM01A-D2NR",
-    # "ARBNA2SLBSFM01B-D2NR",
-    # "USOMA1SLBINT03B",
-    # "INMUM1SLBSFM01A-C2",
-    # "USOMA1SLBSFA02A",
-    # "ARBNA2SLBSFM01B-TESTLEG",
-    # "AUSYD2SLBSFM01B-A2R",
-]
+DISREGARD_LB_CITRIX = []

@@ -1,25 +1,24 @@
-# pylint: disable=W1203, C0103, W0631, W0703
+# pylint: disable=W1203, C0103, W0631, W0703, R0903
 """Nautobot REST API SDK."""
 
 import os
 import requests
 import pynautobot
-from helper.local_helper import get_nb_keys
+from helper import getNBtoken
 
 requests.urllib3.disable_warnings()
-
-token = os.environ.get("HASHI_TOKEN")
 
 
 # fmt: off
 class NBLogIn:
+    """Nautobot LogIn."""
     url                     = os.environ.get("RD_OPTION_NAUTOBOT_URL")
-    token                   = get_nb_keys(url)
-    nb                      = pynautobot.api(url, token=token, threading=True)
+    nb                      = pynautobot.api(url, token=getNBtoken(), threading=True)
     nb.http_session.verify  = False
 
 
 class Device_ATTR(NBLogIn):
+    """Nautobot Core model Device Attributes."""
     plugins_attr            = getattr(NBLogIn.nb, "plugins")
     extras_attr             = getattr(NBLogIn.nb, "extras")
     dcim_attr               = getattr(NBLogIn.nb, "dcim")
@@ -37,6 +36,7 @@ class Device_ATTR(NBLogIn):
 
 
 class VIPT_ATTR(Device_ATTR):
+    """Nautobot VIP model VIP Attributes."""
     vip_tracker_attr        = getattr(Device_ATTR.plugins_attr, "vip-tracker")
     vip_attr                = getattr(vip_tracker_attr, "vip")
     vip_detail_attr         = getattr(vip_tracker_attr, "vip-detail")

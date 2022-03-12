@@ -2,12 +2,11 @@
 """Nautobot REST API SDK."""
 
 import pynautobot
-from random import randint
-from helper.local_helper import log
+from helper import log
 from helper.variables_lb import VIP_FIELDS
 from datetime import datetime
 from nautobot.nautobot_attr import VIPT_ATTR
-from nautobot.nautobot_filters import cert_filter, vip_port_filter
+from nautobot.nautobot_filters import cert_filter, vip_port_filter, cert_filter1, cert_serial
 
 
 class LB_VIP(VIPT_ATTR):
@@ -56,7 +55,6 @@ class LB_VIP(VIPT_ATTR):
             if self.create_vip:
                 if not self.vip_data.get("pool_mem", []):
                     self.vip_data["pool_mem"] = ["1.1.1.1"]
-                # self.members()
                 if not self.vip_data.get("pool"):
                     self.vip_data["pool"] = "UNKNOWN"
                 self.pool()
@@ -74,6 +72,7 @@ class LB_VIP(VIPT_ATTR):
             )
 
     def validate_update(self):
+        """Validate if VIP already exist in Nautobot."""
         variables = {"vip": self.vip_data.get("name")}
         self.vip_addr_uuid
         resp = VIPT_ATTR.nb.graphql.query(query=self.vip_query, variables=variables).json
@@ -81,10 +80,11 @@ class LB_VIP(VIPT_ATTR):
             if self.vip_data.get("address").split("/")[0] == vip["address"].get("address").split("/")[0]:
                 if vip_port_filter(vip, self.vip_data):
                     self.create_vip = False
-                    for mem in vip["pool"].get("members"):
-                        if mem["address"].get("address").split("/")[0] not in str(self.vip_data.get("pool_mem")):
-                            self.pool()
-                    if self.vip_data.get("cert"):
+                    if self.vip_data.get("pool_mem"):
+                        for mem in vip["pool"].get("members"):
+                            if mem["address"].get("address").split("/")[0] not in str(self.vip_data.get("pool_mem")):
+                                self.pool()
+                    if self.vip_data.get("cert") and len(self.vip_data.get("cert")) < 5:
                         for cert in self.vip_data.get("cert"):
                             try:
                                 if cert_filter(cert, vip):
@@ -110,9 +110,10 @@ class LB_VIP(VIPT_ATTR):
         try:
             VIPT_ATTR.vip_attr.create(data)
         except pynautobot.core.query.RequestError:
-            log.warning(
-                f"Duplicate VIP:Port [{self.vip_data.get('loadbalancer')}] {self.vip_data.get('address')}:{self.vip_data.get('port')}"
-            )
+            pass
+            # log.warning(
+            # f"Duplicate VIP:Port [{self.vip_data.get('name')}] {self.vip_data.get('address')}:{self.vip_data.get('port')}"
+            # )
         except Exception as err:
             log.error(f"[Create][{self.vip_data.get('loadbalancer')}] {self.vip_data} : {err}")
 
@@ -177,25 +178,26 @@ class LB_VIP(VIPT_ATTR):
             for cert in self.vip_data.get("cert"):
                 self.cert_parser(cert)
                 certificate = VIPT_ATTR.certificates_attr.get(slug=self.slug_parser(self.cert_info.get("cn")))
-                self.cert_info
-                self.cert_issuer()
+                if not certificate and self.cert_info.get("serial") and len(self.cert_info.get("serial")) > 10:
+                    certificate = VIPT_ATTR.certificates_attr.get(serial_number=self.cert_info.get("serial"))
                 data = {
-                    "name": self.cert_info.get("cn"),
-                    "slug": self.slug_parser(self.cert_info.get("cn")),
                     "exp": self.cert_info.get("exp", "2000-01-01T00:00"),
                     "serial_number": self.cert_info.get("serial"),
-                    "issuer": self.cert_issuer_uuid,
                     "cert_type": "RSA",
                 }
                 if certificate:
                     try:
-                        if data.get("serial_number") and len(data.get("serial_number")) > 8:
+                        if cert_filter1(data, certificate):
                             certificate.update(data)
                     except Exception as err:
                         log.error(
                             f"[{self.vip_data.get('loadbalancer')}] {self.vip_data.get('name')} {cert.get('cert_cn')} : {err}"
                         )
                 else:
+                    self.cert_issuer()
+                    data["name"] = self.cert_info.get("cn")
+                    data["slug"] = self.slug_parser(self.cert_info.get("cn"))
+                    data["issuer"] = self.cert_issuer_uuid
                     try:
                         certificate = VIPT_ATTR.certificates_attr.create(data)
                     except Exception as err:
@@ -222,7 +224,7 @@ class LB_VIP(VIPT_ATTR):
             cert_data (dict): Cert Info
         """
         log.debug(f"[Cert] Before Parser : {cert_data}")
-        cert = {"serial": randint(100, 2000) if not cert_data.get("cert_serial") else cert_data.get("cert_serial")}
+        cert = cert_serial(cert_data)
         cert["cn"] = cert_data.get("cert_cn", "").split("/")[0].split(",")[0]
         if cert_data.get("cert_issuer"):
             cert["issuer"] = {}
@@ -307,11 +309,13 @@ class LB_VIP(VIPT_ATTR):
             self.pool_error()
 
     def pool_exist_by_name(self, name):
+        """Check for Pool by name."""
         pools = VIPT_ATTR.pools_attr.get(slug=self.slug_parser(name))
         if pools:
             return pools
 
     def pool_exist_by_addr(self, addr_uuid, name=""):
+        """Check for Pool by Member UUID."""
         try:
             pool_lst = VIPT_ATTR.pools_attr.filter(members=addr_uuid)
             if name:
@@ -323,6 +327,7 @@ class LB_VIP(VIPT_ATTR):
             pass
 
     def pool_error(self):
+        """Default Pool."""
         pool_name = "pool_error"
         mem_addr_uuid = self.ipam_address("1.1.1.1")
         pools = self.pool_exist_by_addr(mem_addr_uuid)
@@ -339,7 +344,6 @@ class LB_VIP(VIPT_ATTR):
     def members(self):
         """Create Pool Member object in VIP Plugin module."""
         members = []
-        # port = mem.get("port")
         self.pool_mem_parser()
         for mem in self.pool_mem_info:
             mem_uuid = self.ipam_address(mem.get("address"))
@@ -358,7 +362,6 @@ class LB_VIP(VIPT_ATTR):
                     "port": port,
                     "tags": self.tag_uuid,
                 }
-                # log.info(f"creating member {data}")
                 try:
                     member = VIPT_ATTR.members_attr.create(data)
                     log.debug("[Member] Created")

@@ -4,10 +4,10 @@
 import json
 import sys
 from citrix.citrix_fun import CITIRIX_FUN
-from helper.local_helper import log, uploadfile, getfile
 from helper.variables_lb import NS_DEVICE_FIELDS
-from nautobot.nautobot_main import NautobotClient
 from citrix.citrix_filters import filter_device, filter_vip
+from helper import log
+from helper.local_helper import uploadFile, nautobotUpdate
 
 
 class CITIRIX_MAIN:
@@ -35,25 +35,12 @@ class CITIRIX_MAIN:
                 if device["ha_ip_address"].startswith("10.") or device["ha_ip_address"].startswith("167."):
                     device["environment"] = self.env
             if filter_device(device, self.env):
-                log.info(device.get("hostname"))
                 device["vips"] = self.gather_vip_info(device)
                 if device.get("vips"):
                     self.sas_vip_info.extend(device.get("vips"))
-                    NautobotClient(device)
-        self.update_records()
+                    nautobotUpdate(device)
+        log.info(uploadFile(self.sas_vip_info, self.env))
         log.info("Job done")
-
-    def update_records(self):
-        """Update VIP data on to remote server and Nautobot."""
-        filename = f"{self.env}.json"
-        with open(filename, "w+") as json_file:
-            json.dump(self.sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
-        oldfile = getfile(filename)
-        if oldfile:
-            with open(f"{filename}-old", "w+") as json_file:
-                json.dump(oldfile, json_file, indent=4, separators=(",", ": "), sort_keys=True)
-        resp = uploadfile(filename)
-        log.info(resp.strip())
 
     def ns_device_lst(self):
         """Get device list function."""
@@ -69,7 +56,7 @@ class CITIRIX_MAIN:
     def gather_vip_info(self, device):
         """Gather VIP information for each devices."""
         vs_lst = self.hlpfun.pull_vip_info(device).get("lbvserver", [])
-        log.info(f"{device.get('hostname')}: {len(vs_lst)} VIPs...")
+        log.info(f"{device.get('hostname')}: {len(vs_lst)} VIPs")
         vip_lst = []
         for vs_name in vs_lst:
             if filter_vip(vs_name):
@@ -85,6 +72,7 @@ class CITIRIX_MAIN:
         return vip_lst
 
     def vip_tempate(self, vs_name, device):
+        """VIP Template."""
         vip_info = dict(
             [
                 ("name", vs_name.get("name")),
