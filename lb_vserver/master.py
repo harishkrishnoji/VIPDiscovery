@@ -3,14 +3,16 @@
 
 from citrix_adm.client import ADMClient
 from f5_bigiq.client import BigIQClient
-from helper import log, getLBcredentials, env
+from helper import log, getLBcredentials, env, edata
 from citrix.citrix_main import CITIRIX_MAIN
 from f5.f5_main import F5_MAIN
 from nautobot.nautobot_vip_delete import LB_VIP_DELETE
+from helper.local_helper import VIPEmail
 
 
 if __name__ == "__main__":
     log.info(f"Environment {env}")
+    edata.append(f"Environment {env}")
     svcp, svcu, lowu, lowp = getLBcredentials()
     try:
         if "Netscaler" in env:
@@ -32,3 +34,4 @@ if __name__ == "__main__":
             vipdel.vip_delete()
     except Exception as err:
         log.error(f"{err}")
+    VIPEmail()

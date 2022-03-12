@@ -6,7 +6,8 @@ import json
 import requests
 from deepdiff import DeepDiff
 from nautobot.nautobot_main import NautobotClient
-from helper import log, deviceToQuery, env, glab, gitFile
+from helper import log, deviceToQuery, env, glab, gitFile, edata
+from helper_fts.email import send_email
 
 
 requests.packages.urllib3.disable_warnings()
@@ -50,6 +51,9 @@ def nautobotUpdate(device):
     if gitFile:
         device = diffObject(device)
     log.info(f"{device.get('hostname')}: [{ovips}] Total VIPs, [{len(device.get('vips', []))}] VIPs to update Nautobot")
+    edata.append(
+        f"{device.get('hostname')}: [{ovips}] Total VIPs, [{len(device.get('vips', []))}] VIPs to update Nautobot"
+    )
     if device.get("vips"):
         NautobotClient(device)
 
@@ -92,3 +96,12 @@ def objDeepDiff(od, nd):
             exclude_paths=["root['loadbalancer']", "root['loadbalancer_address']", "root['pool_mem']"],
         )
     return DeepDiff(od, nd, ignore_order=True, exclude_paths=["root['loadbalancer']", "root['loadbalancer_address']"])
+
+
+def VIPEmail():
+    """Email."""
+    msg = {}
+    msg["to"] = "harish.krishnoji@fiserv.com"
+    msg["cc"] = "harish.krishnoji@fiserv.com"
+    msg["body"] = edata
+    send_email(**msg)

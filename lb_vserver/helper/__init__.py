@@ -10,6 +10,7 @@ from helper.vault_helper import getGITtoken, getNBtoken, getLBcredentials
 
 
 log = get_logger()
+edata = []
 nburl = os.environ.get("RD_OPTION_NAUTOBOT_URL")
 env = os.environ.get("RD_OPTION_ENV")
 deviceToQuery = os.environ.get("RD_OPTION_DEVICES", "All")
