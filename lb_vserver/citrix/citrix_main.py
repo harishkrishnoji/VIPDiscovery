@@ -39,7 +39,7 @@ class CITIRIX_MAIN:
                 if device.get("vips"):
                     self.sas_vip_info.extend(device.get("vips"))
                     nautobotUpdate(device)
-        log.info(uploadFile(self.sas_vip_info, self.env))
+        uploadFile(self.sas_vip_info)
         log.info("Job done")
 
     def ns_device_lst(self):
