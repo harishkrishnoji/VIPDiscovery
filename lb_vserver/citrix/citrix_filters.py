@@ -2,8 +2,7 @@
 
 import os
 from helper.variables_lb import DISREGARD_VIP, DISREGARD_LB_CITRIX, FILTER_VIP
-
-NS_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+from helper import deviceToQuery
 
 
 def filter_device(device, ENV):
@@ -11,7 +10,7 @@ def filter_device(device, ENV):
     if (
         device.get("environment") == ENV
         and device.get("hostname") not in DISREGARD_LB_CITRIX
-        and ("All" in NS_DEVICE_TO_QUERY or device.get("hostname") in NS_DEVICE_TO_QUERY)
+        and ("All" in deviceToQuery or device.get("hostname") in deviceToQuery)
         and filter_HA_state(device)
     ):
         return True

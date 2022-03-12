@@ -55,7 +55,6 @@ class LB_VIP(VIPT_ATTR):
             if self.create_vip:
                 if not self.vip_data.get("pool_mem", []):
                     self.vip_data["pool_mem"] = ["1.1.1.1"]
-                # self.members()
                 if not self.vip_data.get("pool"):
                     self.vip_data["pool"] = "UNKNOWN"
                 self.pool()
@@ -81,9 +80,10 @@ class LB_VIP(VIPT_ATTR):
             if self.vip_data.get("address").split("/")[0] == vip["address"].get("address").split("/")[0]:
                 if vip_port_filter(vip, self.vip_data):
                     self.create_vip = False
-                    for mem in vip["pool"].get("members"):
-                        if mem["address"].get("address").split("/")[0] not in str(self.vip_data.get("pool_mem")):
-                            self.pool()
+                    if self.vip_data.get("pool_mem"):
+                        for mem in vip["pool"].get("members"):
+                            if mem["address"].get("address").split("/")[0] not in str(self.vip_data.get("pool_mem")):
+                                self.pool()
                     if self.vip_data.get("cert") and len(self.vip_data.get("cert")) < 5:
                         for cert in self.vip_data.get("cert"):
                             try:
@@ -224,7 +224,6 @@ class LB_VIP(VIPT_ATTR):
             cert_data (dict): Cert Info
         """
         log.debug(f"[Cert] Before Parser : {cert_data}")
-        # cert = {"serial": randint(100, 2000) if not cert_data.get("cert_serial") else cert_data.get("cert_serial")}
         cert = cert_serial(cert_data)
         cert["cn"] = cert_data.get("cert_cn", "").split("/")[0].split(",")[0]
         if cert_data.get("cert_issuer"):
@@ -345,7 +344,6 @@ class LB_VIP(VIPT_ATTR):
     def members(self):
         """Create Pool Member object in VIP Plugin module."""
         members = []
-        # port = mem.get("port")
         self.pool_mem_parser()
         for mem in self.pool_mem_info:
             mem_uuid = self.ipam_address(mem.get("address"))
@@ -364,7 +362,6 @@ class LB_VIP(VIPT_ATTR):
                     "port": port,
                     "tags": self.tag_uuid,
                 }
-                # log.info(f"creating member {data}")
                 try:
                     member = VIPT_ATTR.members_attr.create(data)
                     log.debug("[Member] Created")

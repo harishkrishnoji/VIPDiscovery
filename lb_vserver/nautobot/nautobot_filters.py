@@ -15,10 +15,7 @@ def cert_filter(cert, vip):
 
 def vip_port_filter(vip, vip_data):
     """Filter to check vip and port attributes."""
-    if (
-        (str(vip_data.get("port")) == str(vip.get("port")) and vip_data.get("protocol") == vip.get("protocol"))
-        and (vip_data.get("pool_mem"))
-    ):
+    if str(vip_data.get("port")) == str(vip.get("port")) and vip_data.get("protocol") == vip.get("protocol"):
         return True
 
 

@@ -14,7 +14,7 @@ requests.packages.urllib3.disable_warnings()
 
 def uploadFile(sas_vip_info):
     """Update VIP data on to remote server and GitLab."""
-    if deviceToQuery == "All":
+    if "All" in deviceToQuery:
         filename = f"{env}.json"
         with open(filename, "w+") as json_file:
             json.dump(sas_vip_info, json_file, indent=4, separators=(",", ": "), sort_keys=True)
@@ -48,7 +48,9 @@ def nautobotUpdate(device):
     """Update Nautobot."""
     if gitFile:
         device = diffObject(device)
-    NautobotClient(device)
+    log.info(f"{device.get('hostname')}: [{len(device.get('vips', []))}] VIPs to update Nautobot")
+    if device.get("vips"):
+        NautobotClient(device)
 
 
 def diffObject(device):
@@ -56,15 +58,13 @@ def diffObject(device):
     nvips = device.get("vips")
     newdev = device.copy()
     newdev["vips"] = []
-    log.info(f"New VIPs count: {len(nvips)}, Old VIPs count: {len(gitFile)}")
     for nd in nvips:
         newvip = True
         for od in gitFile:
-            if objFilter(od, nd) and not DeepDiff(od, nd, ignore_order=True, exclude_paths=["root['loadbalancer']"]):
+            if objFilter(od, nd) and not objDeepDiff(od, nd):
                 newvip = False
         if newvip:
             newdev["vips"].append(nd)
-    log.info(f"After filter VIPs count: {len(newdev['vips'])}")
     return newdev
 
 
@@ -79,3 +79,9 @@ def objFilter(od, nd):
         and (od.get("environment") == nd.get("environment"))
     ):
         return True
+
+
+def objDeepDiff(od, nd):
+    if "1.1.1.1" in od.get("pool_mem"):
+        return DeepDiff(od, nd, ignore_order=True, exclude_paths=["root['loadbalancer']", "root['pool_mem']"])
+    return DeepDiff(od, nd, ignore_order=True, exclude_paths=["root['loadbalancer']"])

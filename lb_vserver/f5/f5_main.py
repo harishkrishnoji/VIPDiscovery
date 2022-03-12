@@ -51,7 +51,7 @@ class F5_MAIN:
         """Get list of all devices from BIG-IQ."""
         try:
             jresp = json.loads(self.f5.bigiq_api_call().text)
-            log.info(f"F5 Device count : {len(jresp.get('items'))}")
+            log.info(f"F5 Device count: {len(jresp.get('items'))}")
             device_info = []
             for device in jresp["items"]:
                 if filter_device(device):
@@ -67,7 +67,7 @@ class F5_MAIN:
                 resp = self.f5.bigiq_api_call("GET", uuid=item["uuid"], path="/rest-proxy/mgmt/tm/sys/failover")
                 return json.loads(resp.text)["apiRawValues"]["apiAnonymous"].split()[1]
             except requests.exceptions.HTTPError:
-                log.error(f"{sys._getframe().f_code.co_name}: Service Unavailable : {item['hostname']}")
+                log.error(f"{sys._getframe().f_code.co_name}: Service Unavailable: {item['hostname']}")
             except Exception as err:
                 log.error(f"{sys._getframe().f_code.co_name}: {item['hostname']}: {err}")
         else:
@@ -83,7 +83,7 @@ class F5_MAIN:
                 if "unavailable" in str(jresp["entries"][svalue]["nestedStats"]["entries"].get("health.summary")):
                     item["status"] = "Unreachable"
                     item["ha_master_state"] = "Unreachable"
-                    log.error(f"Unreachable Device : {item.get('hostname')}")
+                    log.error(f"Unreachable Device: {item.get('hostname')}")
                 else:
                     item["status"] = "Active"
             return f5_info

@@ -2,13 +2,12 @@
 
 import os
 from helper.variables_lb import DISREGARD_LB_F5, F5_STANDALONE, DISREGARD_VIP, FILTER_VIP
-
-F5_DEVICE_TO_QUERY = os.environ.get("RD_OPTION_DEVICES", "All")
+from helper import deviceToQuery
 
 
 def filter_device(device):
     """Device filter."""
-    if "All" in F5_DEVICE_TO_QUERY or device["hostname"] in F5_DEVICE_TO_QUERY:
+    if "All" in deviceToQuery or device["hostname"] in deviceToQuery:
         return True
 
 
