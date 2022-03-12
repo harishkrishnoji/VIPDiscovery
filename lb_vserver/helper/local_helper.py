@@ -46,9 +46,10 @@ def getFileSAS(fname=""):
 
 def nautobotUpdate(device):
     """Update Nautobot."""
+    ovips = len(device.get('vips', []))
     if gitFile:
         device = diffObject(device)
-    log.info(f"{device.get('hostname')}: [{len(device.get('vips', []))}] VIPs to update Nautobot")
+    log.info(f"{device.get('hostname')}: [{ovips}] Total VIPs, [{len(device.get('vips', []))}] VIPs to update Nautobot")
     if device.get("vips"):
         NautobotClient(device)
 

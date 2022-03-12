@@ -56,7 +56,7 @@ class CITIRIX_MAIN:
     def gather_vip_info(self, device):
         """Gather VIP information for each devices."""
         vs_lst = self.hlpfun.pull_vip_info(device).get("lbvserver", [])
-        log.info(f"{device.get('hostname')}: {len(vs_lst)} VIPs")
+        # log.info(f"{device.get('hostname')}: {len(vs_lst)} VIPs")
         vip_lst = []
         for vs_name in vs_lst:
             if filter_vip(vs_name):

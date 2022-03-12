@@ -41,7 +41,7 @@ class F5_MAIN:
                     self.f5f.item = item
                     item["vips"] = self.f5f.gather_vip_info()
                     if item["vips"]:
-                        log.info(f"{item.get('hostname')}: [VIPs] {len(item['vips'])}")
+                        # log.info(f"{item.get('hostname')}: [VIPs] {len(item['vips'])}")
                         self.sas_vip_info.extend(item["vips"])
                         nautobotUpdate(item)
         uploadFile(self.sas_vip_info)
