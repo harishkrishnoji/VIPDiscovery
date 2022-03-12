@@ -4,10 +4,10 @@
 import json
 import sys
 from citrix.citrix_fun import CITIRIX_FUN
-from helper.local_helper import log, uploadfile
 from helper.variables_lb import NS_DEVICE_FIELDS
-from nautobot.nautobot_main import NautobotClient
-from citrix.citrix_filters import filter_device, filter_vip, nautobotday
+from citrix.citrix_filters import filter_device, filter_vip
+from helper import log
+from helper.local_helper import uploadFile, nautobotUpdate
 
 
 class CITIRIX_MAIN:
@@ -38,9 +38,8 @@ class CITIRIX_MAIN:
                 device["vips"] = self.gather_vip_info(device)
                 if device.get("vips"):
                     self.sas_vip_info.extend(device.get("vips"))
-                    if nautobotday():
-                        NautobotClient(device)
-        log.info(uploadfile(self.sas_vip_info, self.env))
+                    nautobotUpdate(device)
+        log.info(uploadFile(self.sas_vip_info, self.env))
         log.info("Job done")
 
     def ns_device_lst(self):
@@ -73,6 +72,7 @@ class CITIRIX_MAIN:
         return vip_lst
 
     def vip_tempate(self, vs_name, device):
+        """VIP Template."""
         vip_info = dict(
             [
                 ("name", vs_name.get("name")),

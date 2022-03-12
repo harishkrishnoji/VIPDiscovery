@@ -3,7 +3,7 @@
 
 from nautobot.nautobot_attr import Device_ATTR
 from helper.variables_nautobot import NAUTOBOT_DEVICE_REGION, NAUTOBOT_DEVICE_REGION_OFS
-from helper.local_helper import log
+from helper import log
 
 
 class NB_Device(Device_ATTR):

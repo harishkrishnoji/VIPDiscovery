@@ -1,22 +1,17 @@
 # pylint: disable=W1203, C0103, W0631, W0401, W0703, C0412
 """Master."""
 
-import os
 from citrix_adm.client import ADMClient
 from f5_bigiq.client import BigIQClient
-from helper.local_helper import log
+from helper import log, getLBcredentials, env
 from citrix.citrix_main import CITIRIX_MAIN
 from f5.f5_main import F5_MAIN
 from nautobot.nautobot_vip_delete import LB_VIP_DELETE
-from helper.local_helper import get_credentials
 
-
-env = os.environ.get("RD_OPTION_ENV")
-nburl = os.environ.get("RD_OPTION_NAUTOBOT_URL")
 
 if __name__ == "__main__":
     log.info(f"Environment {env}")
-    svcp, svcu, lowu, lowp = get_credentials()
+    svcp, svcu, lowu, lowp = getLBcredentials()
     try:
         if "Netscaler" in env:
             adm = ADMClient("https://adc.1dc.com/nitro/v1/", svcu, svcp)
