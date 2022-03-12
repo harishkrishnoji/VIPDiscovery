@@ -22,7 +22,6 @@ A Python script will query F5 BigIQ and Citrix ADC, pull configured devices and 
 
 - [GitLab VIP Data Backup](https://git-enterprise-jc.onefiserv.net/fts-san/sane/backups).
 - [SANE LB JSON file](https://uschd1linjmp01a.1dc.com/NAT/).
-
 ![alt text](img/Diagram.png "Script Diagram")
 
 ### Flowchart
