@@ -19,8 +19,8 @@ variables:
 test:
   stage: test
   tags:
-    # - FTS_LAB_CONCURRENT
-    - jc-cmi
+    - FTS_LAB_CONCURRENT
+    # - jc-cmi
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
@@ -30,8 +30,8 @@ test:
 publish:
   stage: publish
   tags:
-    # - FTS_LAB_CONCURRENT
-    - jc-cmi
+    - FTS_LAB_CONCURRENT
+    # - jc-cmi
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
@@ -42,8 +42,8 @@ publish:
 master:
   stage: master
   tags:
-    # - FTS_LAB_CONCURRENT
-    - jc-cmi
+    - FTS_LAB_CONCURRENT
+    # - jc-cmi
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
@@ -56,8 +56,8 @@ master:
 clean:
   stage: clean
   tags:
-    # - FTS_LAB_CONCURRENT
-    - jc-cmi
+    - FTS_LAB_CONCURRENT
+    # - jc-cmi
   script:
     - docker-compose down --rmi local --remove-orphans --volumes || true
     - docker rmi -f $COMMIT_IMAGE $RELEASE_IMAGE || true

@@ -82,6 +82,7 @@ def objFilter(od, nd):
 
 
 def objDeepDiff(od, nd):
+    """Diff filter Pool Members."""
     if "1.1.1.1" in od.get("pool_mem"):
         return DeepDiff(od, nd, ignore_order=True, exclude_paths=["root['loadbalancer']", "root['pool_mem']"])
     return DeepDiff(od, nd, ignore_order=True, exclude_paths=["root['loadbalancer']"])
