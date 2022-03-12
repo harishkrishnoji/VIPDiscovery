@@ -101,7 +101,7 @@ def objDeepDiff(od, nd):
 def VIPEmail():
     """Email."""
     msg = {}
-    msg["to"] = "harish.krishnoji@fiserv.com"
+    msg["to"] = "SANE-ContentSolutions@fiserv.com, Ashok.Ramaswamy@Fiserv.com, Shashikant.Patel@Fiserv.com, bhavdeep.singh@Fiserv.com"
     msg["cc"] = "harish.krishnoji@fiserv.com"
     msg["body"] = edata
     send_email(**msg)
