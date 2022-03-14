@@ -120,7 +120,7 @@ def emailFormater(logf):
     logfile = []
     if logf:
         for c, v in enumerate(logf):
-            line = logf[c].replace("\n", "").replace("[32m", "").replace("[0m", "")
+            line = logf[c].replace("\n", "").replace("[32m", "").replace("[31m", "").replace("[0m", "")
             if "INFO" in v:
                 logfile.append(f"<span style='color:#008000'>{line}</span>")
             elif "ERROR" in v:
