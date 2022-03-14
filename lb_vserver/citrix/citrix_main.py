@@ -6,7 +6,7 @@ import sys
 from citrix.citrix_fun import CITIRIX_FUN
 from helper.variables_lb import NS_DEVICE_FIELDS
 from citrix.citrix_filters import filter_device, filter_vip
-from helper import log, edata
+from helper import log
 from helper.local_helper import uploadFile, nautobotUpdate
 
 
@@ -47,7 +47,6 @@ class CITIRIX_MAIN:
         try:
             jresp = json.loads(self.adm.adm_api_call().text)
             log.info(f"ADC Netscaler Device count : {len(jresp.get('ns'))}")
-            edata.append(f"ADC Netscaler Device count : {len(jresp.get('ns'))}")
             device_info = [dict((i, device[i]) for i in NS_DEVICE_FIELDS) for device in jresp.get("ns")]
             return device_info
         except Exception as err:

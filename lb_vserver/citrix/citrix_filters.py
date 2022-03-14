@@ -1,6 +1,5 @@
 """Citrix Filters."""
 
-import os
 from helper.variables_lb import DISREGARD_VIP, DISREGARD_LB_CITRIX, FILTER_VIP
 from helper import deviceToQuery
 

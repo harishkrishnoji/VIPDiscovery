@@ -4,7 +4,7 @@
 import sys
 import json
 import requests
-from helper import log, edata
+from helper import log
 from helper.local_helper import uploadFile, nautobotUpdate
 from f5.f5_filters import filter_device, filter_device1, filter_standalone
 from helper.variables_lb import F5_DEVICE_FIELDS
@@ -52,7 +52,6 @@ class F5_MAIN:
         try:
             jresp = json.loads(self.f5.bigiq_api_call().text)
             log.info(f"F5 Device count: {len(jresp.get('items'))}")
-            edata.append(f"F5 Device count: {len(jresp.get('items'))}")
             device_info = []
             for device in jresp["items"]:
                 if filter_device(device):

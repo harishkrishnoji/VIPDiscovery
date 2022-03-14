@@ -6,7 +6,7 @@ import json
 import requests
 from deepdiff import DeepDiff
 from nautobot.nautobot_main import NautobotClient
-from helper import log, deviceToQuery, env, glab, gitFile, edata, lfile
+from helper import log, deviceToQuery, env, glab, gitFile, lfile
 from helper_fts.email import send_email
 
 
@@ -51,9 +51,6 @@ def nautobotUpdate(device):
     if gitFile:
         device = diffObject(device)
     log.info(f"{device.get('hostname')}: [{ovips}] Total VIPs, [{len(device.get('vips', []))}] VIPs to update Nautobot")
-    edata.append(
-        f"{device.get('hostname')}: [{ovips}] Total VIPs, [{len(device.get('vips', []))}] VIPs to update Nautobot"
-    )
     if device.get("vips"):
         NautobotClient(device)
 
@@ -109,11 +106,11 @@ def VIPEmail():
             "bhavdeep.singh@Fiserv.com",
         ]
     )
+    ccEmailList = list(["william.dolbow@Fiserv.com", "Andy.Clark@Fiserv.com", "harish.krishnoji@fiserv.com"])
     msg = {}
     msg["to"] = ", ".join(toEmailList)
-    msg["cc"] = "harish.krishnoji@fiserv.com"
+    msg["cc"] = ", ".join(ccEmailList)
     msg["subject"] = f"RUNDECK - {env}"
-    # msg["body"] = edata
     msg["body"] = emailFormater(logf)
     send_email(**msg)
 

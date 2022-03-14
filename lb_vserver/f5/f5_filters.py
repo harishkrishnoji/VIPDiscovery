@@ -1,6 +1,5 @@
 """F5 filter functions."""
 
-import os
 from helper.variables_lb import DISREGARD_LB_F5, F5_STANDALONE, DISREGARD_VIP, FILTER_VIP
 from helper import deviceToQuery
 
