@@ -101,9 +101,6 @@ def objDeepDiff(od, nd):
 def VIPEmail():
     """Email."""
     logf = open(lfile, "r").readlines()
-    logfile = []
-    if logf:
-        logfile = [logf[c].replace("\n", "") for c, v in enumerate(logf)]
     toEmailList = list(
         [
             "SANE-ContentSolutions@fiserv.com",
@@ -116,5 +113,21 @@ def VIPEmail():
     msg["to"] = ", ".join(toEmailList)
     msg["cc"] = "harish.krishnoji@fiserv.com"
     msg["subject"] = f"RUNDECK - {env}"
-    msg["body"] = edata
+    # msg["body"] = edata
+    msg["body"] = emailFormater(logf)
     send_email(**msg)
+
+
+def emailFormater(logf):
+    """Rundeck EmailFormater."""
+    logfile = []
+    if logf:
+        for c, v in enumerate(logf):
+            line = logf[c].replace("\n", "").replace("[32m", "").replace("[0m", "")
+            if "INFO" in v:
+                logfile.append(f"<span style='color:#008000'>{line}</span>")
+            elif "ERROR" in v:
+                logfile.append(f"<span style='color:#FF5733'>{line}</span>")
+            else:
+                logfile.append(line)
+    return logfile
