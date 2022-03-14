@@ -116,5 +116,5 @@ def VIPEmail():
     msg["to"] = ", ".join(toEmailList)
     msg["cc"] = "harish.krishnoji@fiserv.com"
     msg["subject"] = f"RUNDECK - {env}"
-    msg["body"] = logfile
+    msg["body"] = edata
     send_email(**msg)
