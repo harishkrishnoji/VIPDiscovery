@@ -6,7 +6,7 @@ import json
 import requests
 from deepdiff import DeepDiff
 from nautobot.nautobot_main import NautobotClient
-from helper import log, deviceToQuery, env, glab, gitFile, edata
+from helper import log, deviceToQuery, env, glab, gitFile, edata, lfile
 from helper_fts.email import send_email
 
 
@@ -100,6 +100,10 @@ def objDeepDiff(od, nd):
 
 def VIPEmail():
     """Email."""
+    logf = open(lfile, "r").readlines()
+    logfile = []
+    if logf:
+        logfile = [logf[c].replace("\n", "") for c, v in enumerate(logf)]
     toEmailList = list(
         [
             "SANE-ContentSolutions@fiserv.com",
@@ -112,5 +116,5 @@ def VIPEmail():
     msg["to"] = ", ".join(toEmailList)
     msg["cc"] = "harish.krishnoji@fiserv.com"
     msg["subject"] = f"RUNDECK - {env}"
-    msg["body"] = edata
+    msg["body"] = logfile
     send_email(**msg)

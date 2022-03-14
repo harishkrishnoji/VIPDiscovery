@@ -8,8 +8,8 @@ from helper.vault_helper import getGITtoken, getNBtoken, getLBcredentials
 
 # from helper.vault_helper_dev import getGITtoken, getNBtoken, getLBcredentials
 
-
-log = get_logger()
+lfile = f"{os.getcwd()}/lfile.log"
+log = get_logger("lfile")
 edata = []
 nburl = os.environ.get("RD_OPTION_NAUTOBOT_URL")
 env = os.environ.get("RD_OPTION_ENV")
